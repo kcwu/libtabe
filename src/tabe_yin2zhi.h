@@ -8,7 +8,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tabe_yin2zhi.h,v 1.2 2001/04/30 15:15:57 thhsieh Exp $
+ * $Id: tabe_yin2zhi.h,v 1.3 2001/05/16 16:29:00 thhsieh Exp $
  *
  */
 
@@ -933,6 +933,10 @@ static ZhiCode codelist532[] = {
  0xbcbd, 0xc0bc, 0xc3b0, 0xadbd, 0xc1a3,
  0xf342, 0xc1a1, 0xc0d0, 0xc4f4, 0xf2b7,
  0xcee0,
+};
+
+static ZhiCode codelist533[] = {
+ 0xbdb3,
 };
 
 static ZhiCode codelist552[] = {
@@ -2728,8 +2732,16 @@ static ZhiCode codelist3596[] = {
  0xcab4, 0xd7d1, 0xe8de, 0xd6d5,
 };
 
+static ZhiCode codelist3597[] = {
+ 0xadfe,
+};
+
 static ZhiCode codelist3608[] = {
  0xa94f,
+};
+
+static ZhiCode codelist3612[] = {
+ 0xb35b, 0xa8ba,
 };
 
 static ZhiCode codelist3626[] = {
@@ -4324,6 +4336,10 @@ static ZhiCode codelist5908[] = {
  0xcb5d, 0xd2d0, 0xd56e, 0xdcd1, 0xddfc,
  0xf043, 0xf07e, 0xf245, 0xf25f, 0xf452,
  0xf5e0, 0xf84f, 0xf8cf,
+};
+
+static ZhiCode codelist5909[] = {
+ 0xa94d,
 };
 
 static ZhiCode codelist5930[] = {
@@ -6502,6 +6518,10 @@ static ZhiCode codelist8971[] = {
  0xad41,
 };
 
+static ZhiCode codelist8972[] = {
+ 0xa8ea,
+};
+
 static ZhiCode codelist8976[] = {
  0xbba1,
 };
@@ -6683,6 +6703,10 @@ static ZhiCode codelist9476[] = {
  0xdd40, 0xdcd9,
 };
 
+static ZhiCode codelist9490[] = {
+ 0xd1bd,
+};
+
 static ZhiCode codelist9492[] = {
  0xad59, 0xae7a, 0xe6d9, 0xb0b4, 0xf26b,
  0xdc59, 0xbf78, 0xe3c0, 0xddd8, 0xc564,
@@ -6853,6 +6877,10 @@ static ZhiCode codelist9804[] = {
  0xf96f,
 };
 
+static ZhiCode codelist9808[] = {
+ 0xc2af, 0xc95e,
+};
+
 static ZhiCode codelist9811[] = {
  0xabe7,
 };
@@ -6894,6 +6922,10 @@ static ZhiCode codelist9986[] = {
 static ZhiCode codelist9987[] = {
  0xb2d5, 0xafaa, 0xaafd, 0xab5b, 0xb641,
  0xcfd1, 0xe4c5,
+};
+
+static ZhiCode codelist10000[] = {
+ 0xa740, 0xe544,
 };
 
 static ZhiCode codelist10002[] = {
@@ -7547,6 +7579,7 @@ struct YinZhi _YinZhiTable[] = {
   {     530,  47, codelist530 },
   {     531,   3, codelist531 },
   {     532,  11, codelist532 },
+  {     533,   1, codelist533 },
   {     552,   1, codelist552 },
   {     554,   1, codelist554 },
   {     555,   8, codelist555 },
@@ -7884,7 +7917,9 @@ struct YinZhi _YinZhiTable[] = {
   {    3594,   4, codelist3594 },
   {    3595,   2, codelist3595 },
   {    3596,  14, codelist3596 },
+  {    3597,   1, codelist3597 },
   {    3608,   1, codelist3608 },
+  {    3612,   2, codelist3612 },
   {    3626,   2, codelist3626 },
   {    3627,  10, codelist3627 },
   {    3628,   9, codelist3628 },
@@ -8189,6 +8224,7 @@ struct YinZhi _YinZhiTable[] = {
   {    5906,   4, codelist5906 },
   {    5907,   4, codelist5907 },
   {    5908,  38, codelist5908 },
+  {    5909,   1, codelist5909 },
   {    5930,  11, codelist5930 },
   {    5932,   7, codelist5932 },
   {    5936,  23, codelist5936 },
@@ -8537,6 +8573,7 @@ struct YinZhi _YinZhiTable[] = {
   {    8964,  24, codelist8964 },
   {    8968,   3, codelist8968 },
   {    8971,   1, codelist8971 },
+  {    8972,   1, codelist8972 },
   {    8976,   1, codelist8976 },
   {    8980,  19, codelist8980 },
   {    9000,   4, codelist9000 },
@@ -8576,6 +8613,7 @@ struct YinZhi _YinZhiTable[] = {
   {    9474,  20, codelist9474 },
   {    9475,   6, codelist9475 },
   {    9476,  12, codelist9476 },
+  {    9490,   1, codelist9490 },
   {    9492,  10, codelist9492 },
   {    9522,   3, codelist9522 },
   {    9523,   5, codelist9523 },
@@ -8610,6 +8648,7 @@ struct YinZhi _YinZhiTable[] = {
   {    9802,   3, codelist9802 },
   {    9803,   9, codelist9803 },
   {    9804,  11, codelist9804 },
+  {    9808,   2, codelist9808 },
   {    9811,   1, codelist9811 },
   {    9812,   1, codelist9812 },
   {    9816,   5, codelist9816 },
@@ -8620,6 +8659,7 @@ struct YinZhi _YinZhiTable[] = {
   {    9984,   2, codelist9984 },
   {    9986,  10, codelist9986 },
   {    9987,   7, codelist9987 },
+  {   10000,   2, codelist10000 },
   {   10002,   7, codelist10002 },
   {   10003,   3, codelist10003 },
   {   10004,  13, codelist10004 },

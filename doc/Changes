@@ -12,6 +12,15 @@
 4. Add check for "number of yins is not match for tsi" in tsiadd.c.
    Thanks to Kuang-che Wu <kcwu@ck.tp.edu.tw>.
 
+5. Add new Yins: 
+	£t£¬5	½³
+	£z£«5	­þ
+	£z£­4	³[ ¨º
+	£¨£¹£¬	§@ åD
+	£~£¹£¬5	©M
+	£¦£¹£«4	¨ê
+	£§£¹£¬2	Ñ½
+	£¨£´	Â¯ É^
 
 0.2.1:  2001/01/03
 ---------------------
