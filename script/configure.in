@@ -34,6 +34,12 @@ AC_ARG_WITH(dblib,
          db_library="$withval"
      fi])
 
+AC_ARG_WITH(dbbin,
+    [  --with-dbbin=PATH       set the binary dir of Berkeley DB2.],
+    [if test x$withval != x; then
+         db_bin="$withval"
+     fi])
+
 if test "$program_prefix" != NONE; then
     program_prefix="$program_prefix/"
 else
@@ -128,7 +134,7 @@ AC_MSG_RESULT([checking for install -d: $INSTALL])
 
 
 dnl-----------------------------------------------------------------------
-dnl Checks for Host type & Dynamic library & options.
+dnl Checks for host type
 dnl-----------------------------------------------------------------------
 case "$host_os" in
     linux*)  
@@ -180,8 +186,19 @@ AC_CHECK_HEADERS(db.h, ,
       AC_MSG_RESULT([Please use --with-dbinc to configure.])
       exit 1 ])
 
+if test -z "$db_bin"; then
+    db_bin="$PATH"
+else
+    db_bin="$PATH:$db_bin"
+fi
+AC_CHECK_PROG(DB_DUMP, db_dump, yes, no, $db_bin)
+AC_CHECK_PROG(DB_LOAD, db_load, yes, no, $db_bin)
+
 AC_SUBST(db_include)
 AC_SUBST(db_library)
+AC_SUBST(db_bin)
+AC_SUBST(DB_DUMP)
+AC_SUBST(DB_LOAD)
 
 dnl-----------------------------------------------------------------------
 dnl Checks for X11R6 library

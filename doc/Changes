@@ -5,6 +5,9 @@
 2. Update: config.sub, config.guess, ltconfig, and ltmain.sh to support
    Mac OSX (Thanks to <pshsiao@tcts.seed.net.tw>)
 
+3. Add "db_dump" and "db_load" instructions to pack yin.db.
+   Thanks to the reminder Kuang-che Wu <kcwu@ck.tp.edu.tw>.
+
 
 0.2.2:  2001/06/07
 ---------------------
