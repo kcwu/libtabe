@@ -32,7 +32,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: bims.c,v 1.16 2002/02/26 16:51:06 thhsieh Exp $
+ * $Id: bims.c,v 1.17 2002/04/04 16:28:23 thhsieh Exp $
  */
 #ifdef HAVE_CONFIG_H
 #include "../../../config.h"
@@ -2065,10 +2065,6 @@ isprep(unsigned char *zhi)
 #define MAX_REFCNT	1000
 static int
 tabe_guess_newtsi(struct ChunkInfo *chunk, struct TsiDB *newdb)
-/*
-tabe_guess_newtsi(struct ChunkInfo *chunk, char *return_str, int return_strlen,
-                  struct TsiDB *newdb)
-*/
 {
   int i, lbuf, buflen, need_update;
   unsigned char  *tsi_str;
@@ -2080,10 +2076,6 @@ tabe_guess_newtsi(struct ChunkInfo *chunk, char *return_str, int return_strlen,
   pyin   = yin;
   buf[0] = '\0';
   need_update = 0;
-/*
-  return_str[0] = '\0';
-  return_strlen --;
-*/
   for (i=0; i < chunk->num_tsi; i++) {
     tsi_str = (chunk->tsi+i)->tsi ;
     if (strlen(tsi_str) == 2 && isprep(tsi_str) == FALSE) {
@@ -2098,18 +2090,10 @@ tabe_guess_newtsi(struct ChunkInfo *chunk, char *return_str, int return_strlen,
       buflen = 1024 - lbuf - 1;
       if (buflen >= 4) {  
       /* 得到連續單字詞 */
-/*
-	if (return_strlen > 0) {
-	  strncat(return_str, buf, return_strlen);
-	  return_strlen -= buflen;
-	  strncat(return_str, " ", return_strlen);
-	  return_strlen --;
-	}
-*/
 	tsi = tabeTsiInfoNew(buf);
 	newdb->Get(newdb, tsi);
-        if (tsi->yinnum == 0) {
-          tsi->yinnum = buflen/2;
+	if (tsi->yinnum == 0) {
+          tsi->yinnum = 1;
           tsi->yindata = malloc(sizeof(Yin)*buflen/2);
           memmove(tsi->yindata, yin, sizeof(Yin)*buflen/2);
 	  need_update = 1;
@@ -2133,18 +2117,10 @@ tabe_guess_newtsi(struct ChunkInfo *chunk, char *return_str, int return_strlen,
   buflen = 1024 - lbuf - 1;
   if (buflen >= 4) {
   /* at the end of chunk, check again */
-/*
-    if (return_strlen > 0) {
-      strncat(return_str, buf, return_strlen);
-      return_strlen -= buflen;
-      strncat(return_str, " ", return_strlen);
-      return_strlen --;
-    }
-*/
     tsi = tabeTsiInfoNew(buf);
     newdb->Get(newdb, tsi);
     if (tsi->yinnum == 0) {
-      tsi->yinnum = buflen/2;
+      tsi->yinnum = 1;
       tsi->yindata = malloc(sizeof(Yin)*buflen/2);
       memmove(tsi->yindata, yin, sizeof(Yin)*buflen/2);
       need_update = 1;
@@ -2169,7 +2145,6 @@ bimsTsiGuess(struct TsiDB *tdb, struct TsiDB *usertsidb, char *str)
 {
   int    i=0;
   struct ChuInfo *chu=NULL;
-/*  char   newtsi_str[1024]; */
 
   chu = (struct ChuInfo *) malloc(sizeof(struct ChuInfo));
   chu->chu = (char *) malloc(sizeof(unsigned char)*strlen(str)+1);
@@ -2181,8 +2156,10 @@ bimsTsiGuess(struct TsiDB *tdb, struct TsiDB *usertsidb, char *str)
   for (i=0; i < chu->num_chunk; i++) {
     tabeChunkSegmentationComplex(tdb, chu->chunk+i);
     tabe_guess_newtsi(chu->chunk+i, usertsidb);
-/*    tabe_guess_newtsi(chu->chunk+i, newtsi_str, 1024, usertsidb); */
   }
+  tabeChunkInfoDestroy(chu->chunk);
+  free(chu->chu);
+  free(chu);
 }
 /*----------------------------------------------------------------------------
 
