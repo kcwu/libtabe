@@ -47,6 +47,9 @@
     tsidump, tsiguess, tsiyincheck, tsiyindump utilities when necessary.
     By Kuang-che Wu <kcwu@ck.tp.edu.tw>
 
+13. Support Berkeley DB 4.
+    Thansks to Cheng-Lung Sung <clsung@dragon2.net>.
+
 0.2.5: 2001/12/02
 ---------------------
 1. Fix bug in bims.c: et26: t+space.

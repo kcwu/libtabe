@@ -3,7 +3,7 @@
 # Copyright 1999, TaBE Project, All Rights Reserved.
 # Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
 #
-# $Id: tsipackdb.in,v 1.5 2001/11/11 12:33:09 thhsieh Exp $
+# $Id: tsipackdb.in,v 1.6 2004/01/24 20:14:56 kcwu Exp $
 #
 
 PATH=@with_db_bin@
@@ -51,9 +51,11 @@ if [ "$USE_DB" = "DB2" ]; then
     pack_db_file db2 $1 "$DB2_VER" && exit 0
 fi
 
-if [ "$USE_DB" = "DB3" ]; then
+if [ "$USE_DB" = "DB3/4" ]; then
+    # db3/4 have same Btree number
     pack_db_file db  $1 "$DB3_VER" && exit 0
     pack_db_file db3 $1 "$DB3_VER" && exit 0
+    pack_db_file db4 $1 "$DB3_VER" && exit 0
 fi
 
 exit 0

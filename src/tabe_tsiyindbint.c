@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tabe_tsiyindbint.c,v 1.9 2001/12/07 15:20:05 thhsieh Exp $
+ * $Id: tabe_tsiyindbint.c,v 1.10 2004/01/24 20:14:55 kcwu Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -27,6 +27,7 @@
 #endif
 
 #include "tabe.h"
+#define DB_VERSION (DB_VERSION_MAJOR*100000+DB_VERSION_MINOR*1000+DB_VERSION_PATCH)
 
 static void tabeTsiYinDBClose(struct TsiYinDB *tsiyindb);
 static int  tabeTsiYinDBRecordNumber(struct TsiYinDB *tsiyindb);
@@ -72,7 +73,7 @@ tabe_tsiyinDB_DoOpen(const char *db_name, int flags)
 {
   DB *dbp=NULL;
 
-#ifdef HAVE_DB3
+#if DB_VERSION >= 300000
   /* create a db handler */
   if ((errno = db_create(&dbp, NULL, 0)) != 0) {
     fprintf(stderr, "db_create: %s\n", db_strerror(errno));
@@ -85,26 +86,32 @@ tabe_tsiyinDB_DoOpen(const char *db_name, int flags)
       return(NULL);
     }
     else {
-#ifndef HAVE_DB3
-      errno = db_open(db_name, DB_BTREE, DB_CREATE, 0644, NULL, NULL, &dbp);
-#else
+#if DB_VERSION >= 401025
+      errno = dbp->open(dbp, NULL, db_name, NULL, DB_BTREE, DB_CREATE, 0644);
+#elif DB_VERSION >= 300000
       errno = dbp->open(dbp, db_name, NULL, DB_BTREE, DB_CREATE, 0644);
+#else
+      errno = db_open(db_name, DB_BTREE, DB_CREATE, 0644, NULL, NULL, &dbp);
 #endif
     }
   }
   else {
     if (flags & DB_FLAG_READONLY) {
-#ifndef HAVE_DB3
-      errno = db_open(db_name, DB_BTREE, DB_RDONLY, 0444, NULL, NULL, &dbp);
-#else
+#if DB_VERSION >= 401025
+      errno = dbp->open(dbp, NULL, db_name, NULL, DB_BTREE, DB_RDONLY, 0444);
+#elif DB_VERSION >= 300000
       errno = dbp->open(dbp, db_name, NULL, DB_BTREE, DB_RDONLY, 0444);
+#else
+      errno = db_open(db_name, DB_BTREE, DB_RDONLY, 0444, NULL, NULL, &dbp);
 #endif
     }
     else {
-#ifndef HAVE_DB3
-      errno = db_open(db_name, DB_BTREE, 0, 0644, NULL, NULL, &dbp);
-#else
+#if DB_VERSION >= 401025
+      errno = dbp->open(dbp, NULL, db_name, NULL, DB_BTREE, 0, 0644);
+#elif DB_VERSION >= 300000
       errno = dbp->open(dbp, db_name, NULL, DB_BTREE, 0, 0644);
+#else
+      errno = db_open(db_name, DB_BTREE, 0, 0644, NULL, NULL, &dbp);
 #endif
     }
   }
@@ -115,11 +122,11 @@ tabe_tsiyinDB_DoOpen(const char *db_name, int flags)
   }
   if (errno < 0) {
     /* DB specific errno */
-#ifndef HAVE_DB3
+#if DB_VERSION >= 300000
+    fprintf(stderr, "tabeTsiYinDBOpen(): %s.\n", db_strerror(errno));
+#else
     fprintf(stderr, "tabeTsiYinDBOpen(): DB error opening DB File %s.\n",
 	    db_name);
-#else
-    fprintf(stderr, "tabeTsiYinDBOpen(): %s.\n", db_strerror(errno));
 #endif
     return(NULL);
   }
@@ -268,16 +275,16 @@ tabeTsiYinDBRecordNumber(struct TsiYinDB *tsiyindb)
   switch(tsiyindb->type) {
   case DB_TYPE_DB:
     dbp = (DB *)tsiyindb->dbp;
-#ifdef HAVE_DB3_STAT3
+#if DB_VERSION >= 303011
     errno = dbp->stat(dbp, &sp, 0);
 #else
     errno = dbp->stat(dbp, &sp, NULL, 0);
 #endif
     if (!errno) {
-#ifndef HAVE_DB3
-      return(sp->bt_nrecs);
-#else
+#if DB_VERSION >= 300000
       return(sp->bt_ndata);  /* or sp->bt_nkeys? */
+#else
+      return(sp->bt_nrecs);
 #endif
     }
     break;
@@ -485,14 +492,10 @@ tabeTsiYinDBCursorSet(struct TsiYinDB *tsiyindb, struct TsiYinInfo *tsiyin,
     dbcp->c_close(dbcp);
   }
 
-#ifndef HAVE_DB3
-#if DB_VERSION_MINOR > 6 || (DB_VERSION_MINOR == 6 && DB_VERSION_PATCH > 4)
+#if DB_VERSION >= 206004
   dbp->cursor(dbp, NULL, &dbcp, 0);
 #else
   dbp->cursor(dbp, NULL, &dbcp);
-#endif
-#else
-  dbp->cursor(dbp, NULL, &dbcp, 0);
 #endif
   tsiyindb->dbcp = dbcp;
 
