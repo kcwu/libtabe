@@ -18,6 +18,8 @@
 
 6. Fix tsipackdb.in bug when no db_utils found.
    Thanks to Eric Cheng <eric@fractal.myip.org>.
+
+7. Change the .db dir from $(prefix)/share/tabe/tsiyin to $(prefix)/lib/tabe/.
    
 
 0.2.4: 2001/10/19
