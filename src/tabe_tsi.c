@@ -4,7 +4,7 @@
  * Copyright 1999, Chih-Hao Tsai, All Rights Reserved.
  * Copyright 1999, Shian-Hua Lin, All Rights Reserved.
  *
- * $Id: tabe_tsi.c,v 1.2 2001/09/20 00:30:23 thhsieh Exp $
+ * $Id: tabe_tsi.c,v 1.3 2001/11/11 12:33:07 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -38,7 +38,7 @@ tabeTsiInfoLookupPossibleTsiYin(struct TsiDB *tsidb, struct TsiInfo *tsi)
     zhi_buf[0] = (char)tsi->tsi[i*2];
     zhi_buf[1] = (char)tsi->tsi[i*2+1];
     zhi_buf[2] = '\0';
-    zhi[i].tsi = zhi_buf;
+    zhi[i].tsi = (ZhiStr)zhi_buf;
     rval = tabeTsiInfoLookupZhiYin(tsidb, zhi+i);
     if (rval < 0) {
       fprintf(stderr,

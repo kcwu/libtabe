@@ -2,13 +2,16 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tsidump.c,v 1.2 2001/10/16 00:44:43 thhsieh Exp $
+ * $Id: tsidump.c,v 1.3 2001/11/11 12:33:09 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
 #include "../config.h"
 #endif
 
+#ifdef HPUX
+#  define _INCLUDE_POSIX_SOURCE
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

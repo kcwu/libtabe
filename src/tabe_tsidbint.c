@@ -2,13 +2,16 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tabe_tsidbint.c,v 1.6 2001/11/04 16:48:10 thhsieh Exp $
+ * $Id: tabe_tsidbint.c,v 1.7 2001/11/11 12:33:07 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
 #include "../config.h"
 #endif
 
+#ifdef HPUX
+#  define _INCLUDE_POSIX_SOURCE
+#endif
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>

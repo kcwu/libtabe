@@ -13,6 +13,11 @@
 
 4. Add character: ¡³: 0xa1b3¡C
    Thanks to Dan Jacobson <jidanni@yahoo.com.tw>
+
+5. Some more HPUX porting fixes.
+
+6. Fix tsipackdb.in bug when no db_utils found.
+   Thanks to Eric Cheng <eric@fractal.myip.org>.
    
 
 0.2.4: 2001/10/19
