@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tsiadd.c,v 1.4 2001/12/04 15:05:19 thhsieh Exp $
+ * $Id: tsiadd.c,v 1.5 2002/08/11 02:09:26 kcwu Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -307,7 +307,9 @@ archive(struct TsiDB *db, FILE *fp, int ref, int tsiyin, int verbose)
     }
     else {
       tmpyin[0] = '\0';
-      sscanf((char *)buf, "%20s %ld", (char *)tsi->tsi, &refcount);
+      if(sscanf((char *)buf, "%20s %ld", (char *)tsi->tsi, &refcount)!=2) {
+	fprintf(stderr,"Warning: file format error: %s",buf);
+      }
       tsi->refcount = refcount;
       p = buf;
 /*
@@ -317,6 +319,9 @@ archive(struct TsiDB *db, FILE *fp, int ref, int tsiyin, int verbose)
 	p ++;
       }
       p ++;
+      if(verbose && (*p==' ' || *p=='\t')) {
+	fprintf(stderr,"Warning: extra space/tab between first 2 words: %s",buf);
+      }
       while (*p && (*p != ' ' && *p != '\t')) {
 	p ++;
       }
