@@ -33,6 +33,12 @@
    Found by FixeShao-yu Cheng <eric@netgenes.org>
    Fixed by Kuang-che Wu <kcwu@ck.tp.edu.tw>
 
+10. By <thhsieh@linux.org.tw>
+    Fix a bug in libtabe/util/tsiguess: Do not always try to open
+    $HOME/.xcin/newdb. But one can use the flag "-u" to specify the
+    path of user defined DB file.
+
+
 0.2.5: 2001/12/02
 ---------------------
 1. Fix bug in bims.c: et26: t+space.
