@@ -2,7 +2,7 @@
 # Copyright 1999, TaBE Project, All Rights Reserved.
 # Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
 #
-# $Id: Makefile.in,v 1.4 2001/08/20 03:53:03 thhsieh Exp $
+# $Id: Makefile.in,v 1.5 2001/08/21 05:44:53 thhsieh Exp $
 #
 CC              = @CC@
 CFLAGS          = @CFLAGS@
@@ -51,9 +51,7 @@ INCLUDES    =	tabe.h
 #
 # Over all targets.
 #
-all: binary
-
-binary: $(LIBNAME) bims
+all: $(LIBNAME) bims
 
 $(LIBNAME): $(LIBOBJS)
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(LIBOBJS) -rpath $(libdir) \
@@ -90,7 +88,7 @@ tabe_chu.lo: tabe_chu.c tabe.h
 #
 # Other targets.
 #
-.PHONY: clean distclean install install_binary install_data
+.PHONY: clean distclean install
 clean:
 	$(RM) $(LIBNAME) $(TESTPRG) $(TESTOBJ) $(LIBOBJS) *.o .libs *~ core
 	(cd supports/bims; $(MAKE) clean)
@@ -100,7 +98,7 @@ distclean:
 	$(RM) Makefile
 	(cd supports/bims; $(MAKE) distclean)
 
-install:
+install: all
 	if [ ! -d $(libdir) ]; then $(INSTALL) -d $(libdir); fi
 	if [ ! -d $(includedir) ]; then $(INSTALL) -d $(includedir); fi
 	$(LIBTOOL) --mode=install $(INSTALL_DATA) $(LIBNAME) $(libdir)

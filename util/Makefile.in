@@ -2,7 +2,7 @@
 # Copyright 1999, TaBE Project, All Rights Reserved.
 # Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
 #
-# $Id: Makefile.in,v 1.1 2001/08/20 03:53:11 thhsieh Exp $
+# $Id: Makefile.in,v 1.2 2001/08/21 05:44:54 thhsieh Exp $
 #
 CC              = @CC@
 CFLAGS          = @CFLAGS@
@@ -79,7 +79,7 @@ $(TY): $(TYOBJ)
 	$(LIBTOOL) --mode=link $(CC) $(CFLAGS) $(INC) $(DEFS) -o $(TY) $(TYOBJ) $(LDFLAGS)
 
 .PHONY: install clean distclean
-install: $(DUMP) $(DEL) $(ADD) $(TY)
+install: $(DUMP) $(DEL) $(ADD) $(CHK) $(TY)
 	if [ ! -d $(bindir) ]; then $(INSTALL) -d $(bindir); fi
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(DUMP) $(bindir)
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(DEL) $(bindir)
