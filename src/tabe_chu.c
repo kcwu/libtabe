@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tabe_chu.c,v 1.2 2001/04/30 15:15:57 thhsieh Exp $
+ * $Id: tabe_chu.c,v 1.3 2001/06/07 13:29:28 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -116,11 +116,11 @@ tabeChuInfoToChunkInfo(struct ChuInfo *chu)
     p = tabeChunkGet(p, &c);
     if (!p) {
       /* check if there is a non-big5 chunk */
-      if (strlen(q) > 0) { /* yes */
+      if (strlen((char *)q) > 0) { /* yes */
 	/* q is the string */
 	chu->chunk = (struct ChunkInfo *)
 	  realloc(chu->chunk, sizeof(struct ChunkInfo)*(chu->num_chunk+1));
-	(chu->chunk[chu->num_chunk]).chunk = strdup(q);
+	(chu->chunk[chu->num_chunk]).chunk = (ZhiStr)strdup(q);
 	(chu->chunk[chu->num_chunk]).num_tsi = -1;
 	(chu->chunk[chu->num_chunk]).tsi = (struct TsiInfo *)NULL;
 	chu->num_chunk++;
@@ -128,16 +128,16 @@ tabeChuInfoToChunkInfo(struct ChuInfo *chu)
       break;
     }
     else {
-      if ((p - q) != strlen(c)) { /* a non-big5 chunk occurs */
+      if ((p - q) != strlen((char *)c)) { /* a non-big5 chunk occurs */
         char *foo;
 
 	/* the non-big5 chunk is between q and p-strlen(c) */
 	chu->chunk = (struct ChunkInfo *)
 	  realloc(chu->chunk, sizeof(struct ChunkInfo)*(chu->num_chunk+1));
-	foo = (char *)malloc(sizeof(char)*(p-strlen(c)-q+1+1));
-	memset(foo, 0, p-strlen(c)-q+1+1);
-	memcpy(foo, q, p-strlen(c)-q);
-	(chu->chunk[chu->num_chunk]).chunk = foo;
+	foo = (char *)malloc(sizeof(char)*(p-strlen((char *)c)-q+1+1));
+	memset(foo, 0, p-strlen((char *)c)-q+1+1);
+	memcpy(foo, q, p-strlen((char *)c)-q);
+	(chu->chunk[chu->num_chunk]).chunk = (ZhiStr)foo;
 	(chu->chunk[chu->num_chunk]).num_tsi = -1;
 	(chu->chunk[chu->num_chunk]).tsi = (struct TsiInfo *)NULL;
 	chu->num_chunk++;

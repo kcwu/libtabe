@@ -1,3 +1,11 @@
+0.2.3:
+---------------------
+1. Fix compilation warnings in HP-UX in tabe_chu.c
+
+2. Update: config.sub, config.guess, ltconfig, and ltmain.sh to support
+   Mac OSX (Thanks to <pshsiao@tcts.seed.net.tw>)
+
+
 0.2.2:  2001/06/07
 ---------------------
 1. Fix bug in tabe_tsiyindbint.c: the re-allocate tsiyin->yin buffer.
@@ -23,6 +31,7 @@
 	£¨£´	Â¯ É^
 
 6. Add libtool support. Add a "libtabe/src/version.h".
+   Thanks to <rxg@ms25.url.com.tw>.
 
 7. Fill ZhuYin up to line: 61000.
 
