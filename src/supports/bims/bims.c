@@ -32,7 +32,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: bims.c,v 1.17 2002/04/04 16:28:23 thhsieh Exp $
+ * $Id: bims.c,v 1.18 2002/08/05 12:32:49 informer Exp $
  */
 #ifdef HAVE_CONFIG_H
 #include "../../../config.h"
@@ -2076,6 +2076,12 @@ tabe_guess_newtsi(struct ChunkInfo *chunk, struct TsiDB *newdb)
   pyin   = yin;
   buf[0] = '\0';
   need_update = 0;
+  
+  /* needed to check or will cause segmentation fault. */
+  /* FIXME: maybe someone can come up with a better fix? :-) */
+  if (!newdb)
+    return FALSE;
+	   
   for (i=0; i < chunk->num_tsi; i++) {
     tsi_str = (chunk->tsi+i)->tsi ;
     if (strlen(tsi_str) == 2 && isprep(tsi_str) == FALSE) {
