@@ -1,4 +1,4 @@
-0.2.2:  2001/
+0.2.2:  2001/06/07
 ---------------------
 1. Fix bug in tabe_tsiyindbint.c: the re-allocate tsiyin->yin buffer.
    Thanks to Kuang-che Wu <kcwu@ck.tp.edu.tw>.
@@ -21,6 +21,11 @@
 	£¦£¹£«4	¨ê
 	£§£¹£¬2	Ñ½
 	£¨£´	Â¯ É^
+
+6. Add libtool support. Add a "libtabe/src/version.h".
+
+7. Fill ZhuYin up to line: 61000.
+
 
 0.2.1:  2001/01/03
 ---------------------

@@ -2,7 +2,7 @@
 # Copyright 1999, TaBE Project, All Rights Reserved.
 # Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
 #
-# $Id: Makefile.in,v 1.2 2001/01/03 06:51:15 thhsieh Exp $
+# $Id: Makefile.in,v 1.3 2001/06/06 16:26:26 thhsieh Exp $
 #
 CC              = @CC@
 CFLAGS          = @CFLAGS@
@@ -15,79 +15,52 @@ INC             = -I@x_includes@ @db_include@ -I../..
 INSTALL         = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA    = @INSTALL_DATA@
-sharelib_flags  = @sharelib_flags@
 @SET_MAKE@
 
-program_prefix = @program_prefix@
-srcdir      = @srcdir@
-top_srcdir  = @top_srcdir@
-prefix      = $(program_prefix)@prefix@
-exec_prefix = @exec_prefix@
-libdir      = @libdir@
-bindir      = @bindir@
-includedir  = @includedir@
-cf_sharelib = @cf_sharelib@
-ld_sharelib = @ld_sharelib@
-slib_ext    = @slib_ext@
+program_prefix	= @program_prefix@
+srcdir		= @srcdir@
+top_srcdir	= @top_srcdir@
+prefix		= $(program_prefix)@prefix@
+exec_prefix	= @exec_prefix@
+libdir		= @libdir@
+bindir		= @bindir@
+includedir	= @includedir@
+LIBTOOL		= $(top_srcdir)/libtool
 
-version     = 0.2.1
-major_ver   = 0.2
+RELEASE_VER	= @RELEASE_VER@
+CURRENT_VER	= @CURRENT_VER@
+REVISION_VER	= @REVISION_VER@
+AGE_VER		= @AGE_VER@
 
 AR          = ar cr
 RM          = rm -rf
 
-LIBNAME     = bims
+LIBNAME     = libbims.la
 INCLUDES    = bims.h
 SRC         = bims.c
-LIBOBJS     = bims.o
-SHARED_OBJS = obj-s/bims.o
-unsharelib  = lib$(LIBNAME).a
-sharelib    = lib$(LIBNAME).$(slib_ext)
-so_ver      = $(sharelib).$(major_ver)
+LIBOBJS     = bims.lo
 
 
-all: @make_all@
+all: $(LIBNAME)
 
-shared: $(sharelib).$(version)
+$(LIBNAME): $(LIBOBJS)
+	$(LIBTOOL) --mode=link $(CC) -o $@ $(LIBOBJS) -rpath $(libdir) \
+		-version-info $(CURRENT_VER):$(REVISION_VER):$(AGE_VER) \
+		-release $(RELEASE_VER)
 
-unshared: $(unsharelib)
+bims.lo: bims.c bims.h
+	$(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS) $(DEFS) $(INC) -o $@ bims.c
 
-$(unsharelib): $(LIBOBJS)
-	$(AR) $(unsharelib) $(LIBOBJS)
-	if [ -n "$(RANLIB)" ]; then $(RANLIB) $(unsharelib); fi
-
-$(sharelib).$(version): OBJSDIR $(SHARED_OBJS)
-	$(ld_sharelib) -o $(sharelib).$(version) $(SHARED_OBJS)
-	$(RM) $(sharelib) $(sharelib).$(major_ver)
-	$(LN_S) $(sharelib).$(version) $(sharelib).$(major_ver)
-	$(LN_S) $(sharelib).$(version) $(sharelib)
-
-bims.o: bims.c bims.h
-	$(CC) $(CFLAGS) $(DEFS) $(INC) -c -o $@ $<
-
-obj-s/bims.o: bims.c bims.h
-	$(CC) -c $(cf_sharelib) $(CFLAGS) $(DEFS) $(INC) -o $@ bims.c
-
-OBJSDIR:
-	if [ ! -d obj-s ]; then mkdir obj-s; fi
 
 .PHONY: clean distclean install
 clean:
-	$(RM) $(LIBOBJS) $(SHARED_OBJS) $(unsharelib) $(sharelib)* core
+	$(RM) $(LIBOBJS) core $(LIBNAME) .libs
 distclean: clean
 	if [ -d obj-s ]; then rmdir obj-s; fi
-	$(RM) Makefile 
+	$(RM) Makefile
 
 install: all
 	if [ ! -d $(libdir) ]; then $(INSTALL) -d $(libdir); fi
-	$(INSTALL_DATA) $(unsharelib) $(libdir)
-	if [ -f $(sharelib) ]; then \
-	    $(RM) $(libdir)/$(sharelib)*; \
-	    $(INSTALL_PROGRAM) $(sharelib).$(version) $(libdir); \
-	    (cd $(libdir); \
-	     $(LN_S) $(sharelib).$(version) $(sharelib).$(major_ver); \
-	     $(LN_S) $(sharelib).$(version) $(sharelib)); \
-	fi
-
 	if [ ! -d $(includedir) ]; then $(INSTALL) -d $(includedir); fi
+	$(LIBTOOL) --mode=install $(INSTALL_DATA) $(LIBNAME) $(libdir)
 	$(INSTALL_DATA) $(INCLUDES) $(includedir)

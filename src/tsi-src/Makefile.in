@@ -2,25 +2,28 @@
 # Copyright 1999, TaBE Project, All Rights Reserved.
 # Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
 #
-# $Id: Makefile.in,v 1.1 2000/12/09 09:14:17 thhsieh Exp $
+# $Id: Makefile.in,v 1.2 2001/06/06 16:26:26 thhsieh Exp $
 #
 INSTALL         = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA    = @INSTALL_DATA@
 @SET_MAKE@
 
-program_prefix = @program_prefix@
-srcdir      = @srcdir@
-top_srcdir  = @top_srcdir@
-prefix      = $(program_prefix)@prefix@
-exec_prefix = @exec_prefix@
-libdir	    = @libdir@
-bindir	    = @bindir@
-datadir     = @datadir@/tabe/tsiyin
-env_libpath = @env_libpath@
-mergedb     = @enable_mergedb@
+program_prefix	= @program_prefix@
+srcdir		= @srcdir@
+top_srcdir	= @top_srcdir@
+prefix		= $(program_prefix)@prefix@
+exec_prefix	= @exec_prefix@
+libdir		= @libdir@
+bindir		= @bindir@
+datadir		= @datadir@/tabe/tsiyin
+LIBTOOL		= $(top_srcdir)/libtool
+mergedb		= @enable_mergedb@
 
-major_ver   = 0
+RELEASE_VER	= @RELEASE_VER@
+CURRENT_VER	= @CURRENT_VER@
+REVISION_VER	= @REVISION_VER@
+AGE_VER		= @AGE_VER@
 
 RM          = rm -rf
 SRC	    = tsi.src
@@ -33,10 +36,10 @@ TY          = ../util/tsiyindump
 all: $(mergedb) $(TSIDB) $(YINDB)
 
 $(TSIDB): $(SRC)
-	$(env_libpath)=.. $(ADD) -d $(TSIDB) -f $(SRC) -r -y
+	$(LIBTOOL) --mode=execute $(ADD) -d $(TSIDB) -f $(SRC) -r -y
 
 $(YINDB): $(TSIDB)
-	$(env_libpath)=.. $(TY) -d $(TSIDB) -y $(YINDB)
+	$(LIBTOOL) --mode=execute $(TY) -d $(TSIDB) -y $(YINDB)
 
 mergedb:
 	if [ ! -f $(TSIDB) ] && [ -f $(datadir)/$(TSIDB) ]; then \

@@ -2,12 +2,16 @@
 # Copyright 1999, TaBE Project, All Rights Reserved.
 # Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
 #
-# $Id: Makefile.in,v 1.1 2000/12/09 09:14:09 thhsieh Exp $
+# $Id: Makefile.in,v 1.2 2001/06/06 16:26:26 thhsieh Exp $
 #
+LIBTOOL_DEPS = @LIBTOOL_DEPS@
 @SET_MAKE@
 
 all:
 	(cd src; $(MAKE))
+
+libtool: $(LIBTOOL_DEPS)
+	$(SHELL) ./config.status --recheck
 
 .PHONY: clean distclean install
 clean:
@@ -15,7 +19,7 @@ clean:
 
 distclean:
 	(cd src; $(MAKE) distclean)
-	rm -f Makefile config.h config.cache config.log config.status
+	rm -f Makefile config.h config.cache config.log config.status libtool
 
 install:
 	(cd src; $(MAKE) install)

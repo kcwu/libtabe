@@ -2,7 +2,7 @@
 # Copyright 1999, TaBE Project, All Rights Reserved.
 # Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
 #
-# $Id: Makefile.in,v 1.1 2000/12/09 09:14:30 thhsieh Exp $
+# $Id: Makefile.in,v 1.2 2001/06/06 16:26:27 thhsieh Exp $
 #
 CC              = @CC@
 CFLAGS          = @CFLAGS@
@@ -10,19 +10,25 @@ CPPFLAGS        = @CPPFLAGS@
 DEFS            = @DEFS@
 RANLIB          = @RANLIB@
 LN_S            = @LN_S@
-LDFLAGS         = -L.. -ltabe @db_library@
+LDFLAGS         = ../libtabe.la @db_library@
 INC             = @db_include@ -I..
 INSTALL		= @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA    = @INSTALL_DATA@
+@SET_MAKE@
 
-program_prefix = @program_prefix@
-srcdir      = @srcdir@
-top_srcdir  = @top_srcdir@
-prefix      = $(program_prefix)@prefix@
-exec_prefix = @exec_prefix@
-bindir      = @bindir@
-ld_shareexe = @ld_shareexe@
+program_prefix	= @program_prefix@
+srcdir		= @srcdir@
+top_srcdir	= @top_srcdir@
+prefix		= $(program_prefix)@prefix@
+exec_prefix	= @exec_prefix@
+bindir		= @bindir@
+LIBTOOL		= $(top_srcdir)/libtool
+
+RELEASE_VER	= @RELEASE_VER@
+CURRENT_VER	= @CURRENT_VER@
+REVISION_VER	= @REVISION_VER@
+AGE_VER		= @AGE_VER@
 
 #
 # libtabe main makefile.
@@ -51,27 +57,27 @@ all: $(DUMP) $(DEL) $(ADD) $(TY)
 	$(CC) -c $(CFLAGS) $(INC) $(DEFS) -o $@ $<
 
 $(DUMP): $(DUMPOBJ)
-	$(CC) $(CFLAGS) $(ld_shareexe) $(INC) $(DEFS) -o $(DUMP) $(DUMPOBJ) $(LDFLAGS)
+	$(LIBTOOL) --mode=link $(CC) $(CFLAGS) $(INC) $(DEFS) -o $(DUMP) $(DUMPOBJ) $(LDFLAGS)
 
 $(DEL): $(DELOBJ)
-	$(CC) $(CFLAGS) $(ld_shareexe) $(INC) $(DEFS) -o $(DEL) $(DELOBJ) $(LDFLAGS)
+	$(LIBTOOL) --mode=link $(CC) $(CFLAGS) $(INC) $(DEFS) -o $(DEL) $(DELOBJ) $(LDFLAGS)
 
 $(ADD): $(ADDOBJ)
-	$(CC) $(CFLAGS) $(ld_shareexe) $(INC) $(DEFS) -o $(ADD) $(ADDOBJ) $(LDFLAGS)
+	$(LIBTOOL) --mode=link $(CC) $(CFLAGS) $(INC) $(DEFS) -o $(ADD) $(ADDOBJ) $(LDFLAGS)
 
 $(TY): $(TYOBJ)
-	$(CC) $(CFLAGS) $(ld_shareexe) $(INC) $(DEFS) -o $(TY) $(TYOBJ) $(LDFLAGS)
+	$(LIBTOOL) --mode=link $(CC) $(CFLAGS) $(INC) $(DEFS) -o $(TY) $(TYOBJ) $(LDFLAGS)
 
 .PHONY: install clean distclean
 install: $(DUMP) $(DEL) $(ADD) $(TY)
 	if [ ! -d $(bindir) ]; then $(INSTALL) -d $(bindir); fi
-	$(INSTALL_PROGRAM) $(DUMP) $(bindir)
-	$(INSTALL_PROGRAM) $(DEL) $(bindir)
-	$(INSTALL_PROGRAM) $(ADD) $(bindir)
-	$(INSTALL_PROGRAM) $(TY) $(bindir)
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(DUMP) $(bindir)
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(DEL) $(bindir)
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(ADD) $(bindir)
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(TY) $(bindir)
 
 clean:
 	$(RM) $(DUMP) $(DUMPOBJ) $(DEL) $(DELOBJ) $(ADD) $(ADDOBJ) \
-              $(TY) $(TYOBJ) *~ core
+		$(TY) $(TYOBJ) *~ core .libs
 distclean: clean
 	$(RM) Makefile .depend

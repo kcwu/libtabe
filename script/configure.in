@@ -16,12 +16,6 @@ AC_ARG_ENABLE(debug,
          AC_DEFINE(DEBUG) enable_debug=yes
      fi])
 
-AC_ARG_ENABLE(shared,
-    [  --enable-shared         also make the shared libraries.],
-    [if test x$enableval = xyes; then
-	 enable_shared=yes
-     fi])
-
 AC_ARG_ENABLE(merge-db,
     [  --enable-merge-db       merge the original db files with the new version.],
     [if test x$enableval = xyes; then
@@ -54,6 +48,19 @@ AC_SUBST(program_prefix)
 AC_SUBST(enable_mergedb)
 
 dnl-----------------------------------------------------------------------
+dnl Update version information.
+dnl-----------------------------------------------------------------------
+verf='src/version.h'
+RELEASE_VER=`awk '{if (/RELEASE_VER/) print $3}' $verf`
+CURRENT_VER=`awk '{if (/CURRENT_VER/) print $3}' $verf`
+REVISION_VER=`awk '{if (/REVISION_VER/) print $3}' $verf`
+AGE_VER=`awk '{if (/AGE_VER/) print $3}' $verf`
+AC_SUBST(RELEASE_VER)
+AC_SUBST(CURRENT_VER)
+AC_SUBST(REVISION_VER)
+AC_SUBST(AGE_VER)
+
+dnl-----------------------------------------------------------------------
 dnl Check compiler: You can specify in 'CC=<..> ./configure'
 dnl-----------------------------------------------------------------------
 OLD_CFLAGS=$CFLAGS
@@ -61,9 +68,15 @@ AC_PROG_CC
 if test "x$GCC" != xyes; then
     compiler_type=
 
-    AC_MSG_RESULT([checking for ANSI C compiler ....])
+    AC_MSG_CHECKING([ANSI C compiler])
     CFLAGS="$OLD_CFLAGS -Aa"
-    AC_TRY_RUN([ int main(){return 0;} ], [ compiler_type=ANSIC ])
+    AC_TRY_RUN([ int main(){return 0;} ], [ compiler_type=ANSIC ],
+	       [ compiler_type=UNKNOWN ], [ cross_compiler=1 ])
+    if test $compiler_type = ANSIC; then
+	AC_MSG_RESULT([yes])
+    else
+	AC_MSG_RESULT([no])
+    fi
 fi
 CFLAGS=$OLD_CFLAGS
 
@@ -91,6 +104,12 @@ if test -z "$CFLAGS"; then
 fi
 
 dnl-----------------------------------------------------------------------
+dnl libtool commands.
+dnl-----------------------------------------------------------------------
+AM_PROG_LIBTOOL
+AC_SUBST(LIBTOOL_DEPS)
+
+dnl-----------------------------------------------------------------------
 dnl Checks for programs.
 dnl-----------------------------------------------------------------------
 AC_PROG_CPP
@@ -113,65 +132,24 @@ dnl Checks for Host type & Dynamic library & options.
 dnl-----------------------------------------------------------------------
 case "$host_os" in
     linux*)  
-	cf_sharelib='-fPIC'
-	ld_sharelib='gcc -shared -Wl,-soname,$(so_ver)'
-	ld_shareexe=''
-	slib_ext='so'
-	env_libpath='LD_LIBRARY_PATH'
 	AC_DEFINE(LINUX)
         ;;
     freebsd*)
-	cf_sharelib='-fPIC'
-        ld_sharelib='gcc -shared -Wl,-R,$(so_ver)'
-	ld_shareexe=''
-	slib_ext='so'
-	env_libpath='LD_LIBRARY_PATH'
 	AC_DEFINE(FREEBSD)
         ;;
     openbsd*)
-	cf_sharelib='-fPIC'
-        ld_sharelib='ld -x -Bforcearchive -Bshareable'
-	ld_shareexe=''
-	slib_ext='so'
-	env_libpath='LD_LIBRARY_PATH'
 	AC_DEFINE(OPENBSD)
         ;;
     netbsd*)
-	cf_sharelib='-fPIC'
-	ld_sharelib='ld -x -Bforcearchive -Bshareable'
-	ld_shareexe=''
-	slib_ext='so'
-	env_libpath='LD_LIBRARY_PATH'
 	AC_DEFINE(NETBSD)
 	;;
     solaris*)
-	cf_sharelib='-fPIC'
-	ld_sharelib='gcc -shared -Wl,-R,$(so_ver)'
-	ld_shareexe=''
-	slib_ext='so'
-	env_libpath='LD_LIBRARY_PATH'
 	AC_DEFINE(SOLARIS)
 	;;
     hp*)
-	cf_sharelib='-n +Z'
-	ld_sharelib='ld -b +h $(so_ver)'
-	ld_shareexe='-Wl,+s'
-	slib_ext='sl'
-	env_libpath='SHLIB_PATH'
 	AC_DEFINE(HPUX)
 	;;
 esac
-if test "$enable_shared" = yes; then
-    AC_SUBST(cf_sharelib)
-    AC_SUBST(ld_sharelib)
-    AC_SUBST(ld_shareexe)
-    AC_SUBST(slib_ext)
-    AC_SUBST(env_libpath)
-    make_all='unshared shared'
-else
-    make_all='unshared'
-fi
-AC_SUBST(make_all)
 
 
 dnl-----------------------------------------------------------------------
@@ -179,21 +157,29 @@ dnl Checks for Berkeley DB2 libraries.
 dnl-----------------------------------------------------------------------
 if test ! x$db_include = x; then
     db_include="-I$db_include"
+    CPP="$CPP $db_include"
 fi
 if test ! x$db_library = x; then
     db_library="-L$db_library"
+    LDFLAGS="$LDFLAGS $db_library"
 fi
 
-mytarget='db'
-LDFLAGS="$LDFLAGS $db_library"
-AC_CHECK_LIB($mytarget, db_open, , [ mytarget=db2 ])
-if test $mytarget != db; then
-    AC_CHECK_LIB($mytarget, db_open, ,
-        [ AC_MSG_RESULT([You need Berkeley DB 2 to compile xcin.])
-          AC_MSG_RESULT([Please use --with-dbinc and --with-dblib to configure.])
-          exit 1])
+for f in db db2; do
+    AC_CHECK_LIB($f, db_open,
+        [ found=y; db_library="$db_library -l$f" ], [ found=n ])
+    test $found = y && break
+done
+if test $found = n; then
+    AC_MSG_RESULT([You need Berkeley DB2 to compile bimsphone module.])
+    AC_MSG_RESULT([Please use --with-dblib to configure.])
+    exit 1
 fi
-db_library="$db_library -l$mytarget"
+
+AC_CHECK_HEADERS(db.h, ,
+    [ AC_MSG_RESULT([db.h is not available.])
+      AC_MSG_RESULT([Please use --with-dbinc to configure.])
+      exit 1 ])
+
 AC_SUBST(db_include)
 AC_SUBST(db_library)
 
