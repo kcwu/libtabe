@@ -32,7 +32,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: bims.c,v 1.15 2001/12/31 16:05:41 thhsieh Exp $
+ * $Id: bims.c,v 1.16 2002/02/26 16:51:06 thhsieh Exp $
  */
 #ifdef HAVE_CONFIG_H
 #include "../../../config.h"
@@ -2020,6 +2020,176 @@ bimsSetMaxLen(unsigned long int bcid, int maxlen)
   return(0);
 }
 
+/*----------------------------------------------------------------------------
+
+	The tsiguess for bims, patched by
+
+		Pofeng Lee <informer@ns1.m2000.idv.tw>
+
+	edited by Tung-Han Hsieh <thhsieh@linux.org.tw>
+
+----------------------------------------------------------------------------*/
+/*
+ * copy from tsiguess.c 
+ */
+static int 
+isprep(unsigned char *zhi) 
+{
+/* 
+ * ref: http://www.dmpo.sinica.edu.tw:8000/~words/sou/sou.html
+ */
+  const char preplist[]= \
+/* 連接詞    */		"並且和與及或但若" \
+/* 副詞      */		"很只還皆都僅則也要就不將才" \
+/* 時態詞    */		"了著" \
+/* 定詞/量詞 */		"一二兩三四五六七八九十這那此本該其個杯句" \
+/* 語助詞    */		"啊啦吧的得地之乎" \
+/* 介詞      */		"為跟但對在於是像把" \
+/* 後置詞    */		"上中下左右等間時" \
+/* 及物動詞  */		"是有作做讓說" \
+/* misc      */		"我你妳您他她它牠祂";
+
+  int i=0, len;
+
+  len = strlen(preplist);
+  for (i=0; i<len; i+=2) {
+    if (strncmp(zhi, preplist+i, 2) == 0)
+      return TRUE;
+  }
+  return FALSE;
+}
+
+/*
+ * copy from tsiguess.c
+ */
+#define MAX_REFCNT	1000
+static int
+tabe_guess_newtsi(struct ChunkInfo *chunk, struct TsiDB *newdb)
+/*
+tabe_guess_newtsi(struct ChunkInfo *chunk, char *return_str, int return_strlen,
+                  struct TsiDB *newdb)
+*/
+{
+  int i, lbuf, buflen, need_update;
+  unsigned char  *tsi_str;
+  struct TsiInfo *tsi;		
+  char buf[1024];
+  Yin  yin[512], *pyin;
+
+  lbuf   = 1023;
+  pyin   = yin;
+  buf[0] = '\0';
+  need_update = 0;
+/*
+  return_str[0] = '\0';
+  return_strlen --;
+*/
+  for (i=0; i < chunk->num_tsi; i++) {
+    tsi_str = (chunk->tsi+i)->tsi ;
+    if (strlen(tsi_str) == 2 && isprep(tsi_str) == FALSE) {
+    /* 單字詞, 加到 buff */
+      strncat(buf, tsi_str, lbuf);
+      memmove(pyin, chunk->tsi[i].yindata, sizeof(Yin));
+      lbuf -= 2;
+      pyin ++;
+    }
+    else {
+    /* 不是單字詞, 開始整理 buf */
+      buflen = 1024 - lbuf - 1;
+      if (buflen >= 4) {  
+      /* 得到連續單字詞 */
+/*
+	if (return_strlen > 0) {
+	  strncat(return_str, buf, return_strlen);
+	  return_strlen -= buflen;
+	  strncat(return_str, " ", return_strlen);
+	  return_strlen --;
+	}
+*/
+	tsi = tabeTsiInfoNew(buf);
+	newdb->Get(newdb, tsi);
+        if (tsi->yinnum == 0) {
+          tsi->yinnum = buflen/2;
+          tsi->yindata = malloc(sizeof(Yin)*buflen/2);
+          memmove(tsi->yindata, yin, sizeof(Yin)*buflen/2);
+	  need_update = 1;
+        }
+	if (tsi->refcount < MAX_REFCNT)
+	  tsi->refcount ++;
+	newdb->Put(newdb, tsi);
+        if (need_update != 0) {
+          bimsTsiyinDump(usertsidb, useryindb);
+          need_update = 0;
+        }
+	tabeTsiInfoDestroy(tsi);
+      }
+      /* else 單字詞, if 罕見, 標記 for spelling check */
+      buf[0] = '\0';
+      lbuf = 1023;
+      pyin = yin;
+    }
+  }
+
+  buflen = 1024 - lbuf - 1;
+  if (buflen >= 4) {
+  /* at the end of chunk, check again */
+/*
+    if (return_strlen > 0) {
+      strncat(return_str, buf, return_strlen);
+      return_strlen -= buflen;
+      strncat(return_str, " ", return_strlen);
+      return_strlen --;
+    }
+*/
+    tsi = tabeTsiInfoNew(buf);
+    newdb->Get(newdb, tsi);
+    if (tsi->yinnum == 0) {
+      tsi->yinnum = buflen/2;
+      tsi->yindata = malloc(sizeof(Yin)*buflen/2);
+      memmove(tsi->yindata, yin, sizeof(Yin)*buflen/2);
+      need_update = 1;
+    }
+    if (tsi->refcount < MAX_REFCNT)
+      tsi->refcount ++;
+    newdb->Put(newdb,tsi);
+    if (need_update != 0) {
+      bimsTsiyinDump(usertsidb, useryindb);
+      need_update = 0;
+    }
+    tabeTsiInfoDestroy(tsi);
+  }
+  return TRUE;
+}
+
+/* 
+ * Guess Tsi from a string 
+ */
+static void
+bimsTsiGuess(struct TsiDB *tdb, struct TsiDB *usertsidb, char *str)
+{
+  int    i=0;
+  struct ChuInfo *chu=NULL;
+/*  char   newtsi_str[1024]; */
+
+  chu = (struct ChuInfo *) malloc(sizeof(struct ChuInfo));
+  chu->chu = (char *) malloc(sizeof(unsigned char)*strlen(str)+1);
+  chu->num_chunk = 0;
+  chu->chunk = NULL;
+  strcpy(chu->chu, str);
+
+  tabeChuInfoToChunkInfo(chu);
+  for (i=0; i < chu->num_chunk; i++) {
+    tabeChunkSegmentationComplex(tdb, chu->chunk+i);
+    tabe_guess_newtsi(chu->chunk+i, usertsidb);
+/*    tabe_guess_newtsi(chu->chunk+i, newtsi_str, 1024, usertsidb); */
+  }
+}
+/*----------------------------------------------------------------------------
+
+	End of tsiguess.
+
+----------------------------------------------------------------------------*/
+
 /*
  * fetch some text from head
  */
@@ -2145,6 +2315,7 @@ bimsFetchText(DB_pool db, unsigned long int bcid, int len)
   bc->yinlen -= newlen;
 
   bimsContextSmartEdit(_db, bc);
+  bimsTsiGuess(_db->tdb, usertsidb, str);
 
   return(str);
 }

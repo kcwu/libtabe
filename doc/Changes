@@ -23,6 +23,9 @@
 6. Add bims facility: user add Tsi by hand and store to user DB files.
    Thanks to Eric Cheng <eric@fractal.myip.org>.
 
+7. Add bims facility: simple algorithm to learn new phrase input by user.
+   Thanks to Pofeng Lee <informer@ns1.m2000.idv.tw>.
+
 
 0.2.5: 2001/12/02
 ---------------------
