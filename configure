@@ -1631,13 +1631,13 @@ EOF
 #define OPENBSD 1
 EOF
 
-	extra_link_flag='-Wl,-R'
         ;;
     netbsd*)
 	cat >> confdefs.h <<\EOF
 #define NETBSD 1
 EOF
 
+	extra_link_flag='-Wl,-R'
 	;;
     solaris*)
 	cat >> confdefs.h <<\EOF

@@ -146,10 +146,10 @@ case "$host_os" in
         ;;
     openbsd*)
 	AC_DEFINE(OPENBSD)
-	extra_link_flag='-Wl,-R'
         ;;
     netbsd*)
 	AC_DEFINE(NETBSD)
+	extra_link_flag='-Wl,-R'
 	;;
     solaris*)
 	AC_DEFINE(SOLARIS)
