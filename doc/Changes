@@ -3,6 +3,9 @@
 1. Fix bug in tabe_tsiyindbint.c: the re-allocate tsiyin->yin buffer.
    Thanks to Kuang-che Wu <kcwu@ck.tp.edu.tw>.
 
+2. Fix bug in bims.c: the rule to choose the only one character.
+   Thanks to vgod <vgod@CirX.org>.
+
 
 0.2.1:  2001/01/03
 ---------------------

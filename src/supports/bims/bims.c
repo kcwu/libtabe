@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: bims.c,v 1.2 2000/12/10 09:32:36 thhsieh Exp $
+ * $Id: bims.c,v 1.3 2001/01/10 16:44:30 thhsieh Exp $
  */
 #ifdef HAVE_CONFIG_H
 #include "../../../config.h"
@@ -328,33 +328,35 @@ bimsYinChooseZhi(Yin yin)
 {
   ZhiStr str, z;
   ZhiCode code;
-  int len, i;
+  int len, i, idx;
   unsigned long int max, refcount;
-
+  struct ZhiInfo zhi;
+  
   str = tabeYinLookupZhiList(yin);
   if (!str) {
     return(NULL);
   }
   len = strlen((char *)str)/2;
   max = 0;
+  idx = 0;
+  zhi.code = (ZhiCode)0;
 
   for (i = 0; i < len; i++) {
     code = tabeZhiToZhiCode(str+i*2);
     refcount = tabeZhiCodeLookupRefCount(code);
     if (refcount > max) {
       max = refcount;
-    }
-  }
-
-  for (i = 0; i < len; i++) {
-    code = tabeZhiToZhiCode(str+i*2);
-    if (max == tabeZhiCodeLookupRefCount(code)) {
-      break;
+      idx = i;
+      zhi.code = code;
     }
   }
 
   z = (Zhi)malloc(sizeof(unsigned char)*3);
-  strncpy((char *)z, (char *)str+i*2, 2);
+  tabeZhiInfoLookupYin(&zhi);
+  if (zhi.yin[1] != (Yin)0)		/* zhi has more than one yin */
+     strncpy((char *)z, (char *)str, 2);
+  else
+     strncpy((char *)z, (char *)str+idx*2, 2);
   z[2] = (unsigned char)NULL;
 
   return(z);
