@@ -33,7 +33,7 @@
 	struct TsiDB, TsiYinDB: add set_range support for CursorSet.
 	Add flag: DB_FLAG_NOUNPACK_YIN, only effective for struct TsiDB.
 
-8. Change "which" to "whereis" in tsipackdb.in for NetBSD compatibility.
+8. Change "which" to "mywhich" in tsipackdb.in for NetBSD compatibility.
 	Thanks to Rui-Xiang Guo <rxg@ms25.url.com.tw>
 
 
