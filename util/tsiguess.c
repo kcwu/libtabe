@@ -1,6 +1,8 @@
 /*
  * Copyright 2001, TaBE Project, All Rights Reserved.
- * Date: Sat Dec  8 05:29:04  2001
+ * 
+ * $Id: tsiguess.c,v 1.3 2002/08/07 10:02:27 informer Exp $  
+ * 
  */
 #include <stdio.h>
 #include <string.h>
@@ -14,7 +16,9 @@
 #define CHUNK_SIZE      1024
 #define TSI_SIZE        32
 
-#define IS_BIG5HI(c) ( ((c) >= 0xA1 && (c) <=0xF9) ? 1 : 0 )
+/* big5 variant, http://m2000.idv.tw/informer/big5 */
+
+#define IS_BIG5HI(c) ( ((c) >= 0x81 && (c) <=0xFE) ? 1 : 0 )
                                                                                 
 #define IS_BIG5LO(c) ( ( ((c) >= 0x40 && (c) <=0x7E ) ||             \
                          ((c) >= 0xA1 && (c) <=0xFE )    ) ? 1 : 0 )
