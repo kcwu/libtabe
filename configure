@@ -1448,7 +1448,8 @@ host_os=`echo $ac_cv_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
 # Check whether --enable-debug or --disable-debug was given.
 if test "${enable_debug+set}" = set; then
   enableval="$enable_debug"
-    test x$enableval = xyes && cat >>confdefs.h <<\_ACEOF
+    test x$enableval = xyes &&
+cat >>confdefs.h <<\_ACEOF
 #define DEBUG 1
 _ACEOF
 
@@ -3872,7 +3873,7 @@ test "x$enable_libtool_lock" != xno && enable_libtool_lock=yes
 case $host in
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 3875 "configure"' > conftest.$ac_ext
+  echo '#line 3876 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -4404,7 +4405,7 @@ chmod -w .
 save_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS -o out/conftest2.$ac_objext"
 compiler_c_o=no
-if { (eval echo configure:4407: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>out/conftest.err; } && test -s out/conftest2.$ac_objext; then
+if { (eval echo configure:4408: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>out/conftest.err; } && test -s out/conftest2.$ac_objext; then
   # The compiler can only warn and ignore the option if not recognized
   # So say no if there are warnings
   if test -s out/conftest.err; then
@@ -6226,7 +6227,7 @@ else
     lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 6229 "configure"
+#line 6230 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -6324,7 +6325,7 @@ else
     lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 6327 "configure"
+#line 6328 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -7463,38 +7464,51 @@ echo "${ECHO_T}checking for install -d: $INSTALL" >&6
 
 case "$host_os" in
     linux*)
-	cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define LINUX 1
 _ACEOF
 
         ;;
     freebsd*)
-	cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define FREEBSD 1
 _ACEOF
 
         ;;
     openbsd*)
-	cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define OPENBSD 1
 _ACEOF
 
         ;;
     netbsd*)
-	cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define NETBSD 1
 _ACEOF
 
 	;;
     solaris*)
-	cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define SOLARIS 1
 _ACEOF
 
 	;;
     hp*)
-	cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define HPUX 1
+_ACEOF
+
+	;;
+    darwin*)
+
+cat >>confdefs.h <<\_ACEOF
+#define DARWIN 1
 _ACEOF
 
 	;;
@@ -7621,7 +7635,8 @@ fi
 if test $found = y; then
     echo "$as_me:$LINENO: result: Use Berkeley DB3/4 to compile libtabe." >&5
 echo "${ECHO_T}Use Berkeley DB3/4 to compile libtabe." >&6
-    cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define HAVE_DB3 1
 _ACEOF
 
@@ -7740,7 +7755,8 @@ fi
     if test $found = y; then
         echo "$as_me:$LINENO: result: Use Berkeley DB2 to compile libtabe." >&5
 echo "${ECHO_T}Use Berkeley DB2 to compile libtabe." >&6
-        cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define HAVE_DB2 1
 _ACEOF
 

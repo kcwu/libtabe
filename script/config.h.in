@@ -1,40 +1,19 @@
 /* script/config.h.in.  Generated from configure.in by autoheader.  */
-/* acconfig.h
-   This file is in the public domain.
 
-   Descriptive text for the C preprocessor macros that
-   the distributed Autoconf macros can define.
-   No software package will use all of them; autoheader copies the ones
-   your configure.in uses into your configuration header file templates.
-
-   The entries are in sort -df order: alphabetical, case insensitive,
-   ignoring punctuation (such as underscores).  Although this order
-   can split up related entries, it makes it easier to check whether
-   a given entry is in the file.
-
-   Leave the following blank line there!!  Autoheader needs it.  */
-
+/* Define for Darwin system. */
+#undef DARWIN
 
 /* Define if the debug option is enabled. */
 #undef DEBUG
 
-#undef HAVE_DB2
-
-#undef HAVE_DB3
-
-#undef HAVE_DB3_STAT3
-
-#undef LINUX
-
+/* Define for FreeBSD system. */
 #undef FREEBSD
 
-#undef NETBSD
+/* Define if use BerkelyDB2. */
+#undef HAVE_DB2
 
-#undef OPENBSD
-
-#undef SOLARIS
-
-#undef HPUX
+/* Define if use BerkeleyDB3/4. */
+#undef HAVE_DB3
 
 /* Define to 1 if you have the <db.h> header file. */
 #undef HAVE_DB_H
@@ -78,6 +57,18 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
+/* Define for HP-UX system. */
+#undef HPUX
+
+/* Define for Linux system. */
+#undef LINUX
+
+/* Define for NETBSD system. */
+#undef NETBSD
+
+/* Define for OpenBSD system. */
+#undef OPENBSD
+
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
 
@@ -92,6 +83,9 @@
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
+
+/* Define for Solaris system. */
+#undef SOLARIS
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
