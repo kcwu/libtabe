@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: version.h,v 1.5 2001/12/04 15:05:14 thhsieh Exp $
+ * $Id: version.h,v 1.6 2001/12/07 14:37:25 thhsieh Exp $
  *
  */
 
@@ -35,6 +35,10 @@
  *
  *   6. If any interfaces have been removed since the last public release,
  *      then set AGE to 0.
+ *
+ *   7. Everytime when AGE is set to 0, one may need to decrease the
+ *      CURRENT to CURRENT-AGE+1 (the value before it is set to zero).
+ *				-- suggested by T.H.Hsieh --
  */
 
 #define CURRENT_VER	2
