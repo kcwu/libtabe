@@ -1,3 +1,9 @@
+0.2.2:  2001/
+---------------------
+1. Fix bug in tabe_tsiyindbint.c: the re-allocate tsiyin->yin buffer.
+   Thanks to Kuang-che Wu <kcwu@ck.tp.edu.tw>.
+
+
 0.2.1:  2001/01/03
 ---------------------
 1. tsiadd.c: Add comment phrasing for tsi.src.

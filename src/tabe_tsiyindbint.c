@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tabe_tsiyindbint.c,v 1.1 2000/12/09 09:14:12 thhsieh Exp $
+ * $Id: tabe_tsiyindbint.c,v 1.2 2001/01/10 01:38:31 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -345,7 +345,7 @@ TsiYinDBLookupTsiYinDB(struct TsiYinDB *tsiyindb, struct TsiYinInfo *tsiyin)
     switch(errno) {
     case DB_NOTFOUND:
 #ifdef MYDEBUG
-//      fprintf(stderr, "TsiYinDBLookupTsiYinDB(): tsiyin does not exist.\n");
+/*    fprintf(stderr, "TsiYinDBLookupTsiYinDB(): tsiyin does not exist.\n"); */
 #endif
       return(-1);
     default:
@@ -384,7 +384,7 @@ tabeTsiYinDBCursorSet(struct TsiYinDB *tsiyindb, struct TsiYinInfo *tsiyin)
 
   if (tsiyin->yinlen) {
     key.data = tsiyin->yin;
-    key.size = tsiyin->yinlen;
+    key.size = tsiyin->yinlen * sizeof(Yin);
     errno = dbcp->c_get(dbcp, &key, &dat, DB_SET);
   }
   else {
@@ -407,8 +407,8 @@ tabeTsiYinDBCursorSet(struct TsiYinDB *tsiyindb, struct TsiYinInfo *tsiyin)
     free(tsiyin->yin);
     tsiyin->yin = (Yin *)NULL;
   }
-  tsiyin->yin = (Yin *)malloc(sizeof(Yin)*tsiyin->yinlen);
-  memcpy(tsiyin->yin, key.data, sizeof(Yin)*tsiyin->yinlen);
+  tsiyin->yin = (Yin *)malloc(key.size);
+  memcpy(tsiyin->yin, key.data, key.size);
 
   TsiYinDBUnpackDataDB(tsiyin, &dat);  
 
@@ -445,8 +445,8 @@ tabeTsiYinDBCursorNext(struct TsiYinDB *tsiyindb, struct TsiYinInfo *tsiyin)
     free(tsiyin->yin);
     tsiyin->yin = (Yin *)NULL;
   }
-  tsiyin->yin = (Yin *)malloc(sizeof(Yin)*tsiyin->yinlen);
-  memcpy(tsiyin->yin, key.data, sizeof(Yin)*tsiyin->yinlen);
+  tsiyin->yin = (Yin *)malloc(key.size);
+  memcpy(tsiyin->yin, key.data, key.size);
 
   TsiYinDBUnpackDataDB(tsiyin, &dat);
 
@@ -483,8 +483,8 @@ tabeTsiYinDBCursorPrev(struct TsiYinDB *tsiyindb, struct TsiYinInfo *tsiyin)
     free(tsiyin->yin);
     tsiyin->yin = (Yin *)NULL;
   }
-  tsiyin->yin = (Yin *)malloc(sizeof(Yin)*tsiyin->yinlen);
-  memcpy(tsiyin->yin, key.data, sizeof(Yin)*tsiyin->yinlen);
+  tsiyin->yin = (Yin *)malloc(key.size);
+  memcpy(tsiyin->yin, key.data, key.size);
 
   TsiYinDBUnpackDataDB(tsiyin, &dat);
 
