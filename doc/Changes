@@ -26,6 +26,12 @@
 7. Add bims facility: simple algorithm to learn new phrase input by user.
    Thanks to Pofeng Lee <informer@ns1.m2000.idv.tw>.
 
+8. A quick fix for segfault when there is no ~/.xcin/*.db 
+   Fixed by Geoffrey Lee <snailtalk@linux-mandrake.com>
+
+9. Fixed the bug of signed/unsigned TsiInfo->refcount ( µüÀW 0 bug )
+   Found by FixeShao-yu Cheng <eric@netgenes.org>
+   Fixed by Kuang-che Wu <kcwu@ck.tp.edu.tw>
 
 0.2.5: 2001/12/02
 ---------------------
