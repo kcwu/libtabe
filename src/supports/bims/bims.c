@@ -32,7 +32,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: bims.c,v 1.7 2001/09/22 10:52:06 thhsieh Exp $
+ * $Id: bims.c,v 1.8 2001/09/22 13:05:53 thhsieh Exp $
  */
 #ifdef HAVE_CONFIG_H
 #include "../../../config.h"
@@ -121,18 +121,8 @@ bimsDestroy(void)
 {
   int i;
 
-  /* close the primary database */
-  tdb->Close(tdb);
-  tdb = NULL;
-  ydb->Close(ydb);
-  ydb = NULL;
-
-  /* close all other databases, if any */
-  if (len_pool > 0) {
-    tdb_pool[0] = NULL;
-    ydb_pool[0] = NULL;
-  }
-  for (i = 1; i < len_pool; i++) {
+  /* close all the databases, if any */
+  for (i = 0; i < len_pool; i++) {
     if (tdb_pool[i]) {
       (tdb_pool[i])->Close(tdb_pool[i]);
       tdb_pool[i] = NULL;
@@ -142,12 +132,20 @@ bimsDestroy(void)
       ydb_pool[i] = NULL;
     }
   }
-
-  free(tdb_pool);
-  tdb_pool = NULL;
-  free(ydb_pool);
-  ydb_pool = NULL;
-  len_pool = 0;
+  /* close the primary database if haven't down */
+  if (len_pool == 0) {
+    tdb->Close(tdb);
+    ydb->Close(ydb);
+  }
+  else {
+    free(tdb_pool);
+    tdb_pool = NULL;
+    free(ydb_pool);
+    ydb_pool = NULL;
+    len_pool = 0;
+  }
+  tdb = NULL;
+  ydb = NULL;
 }
 
 /*
@@ -320,6 +318,8 @@ bimsDBPoolDelete(char *tsidb_name, char *yindb_name)
   for (i = 0; i < len_pool; i++) {
     if (tdb_pool && tdb_pool[i]) {
       if (!strcmp(tdb_pool[i]->db_name, tsidb_name)) {
+	if (tdb_pool[i] == tdb)
+	  tdb = NULL;
 	tdb_pool[i]->Close(tdb_pool[i]);
 	/* only remove the first one found */
 	tdb_pool[i] = NULL;
@@ -331,6 +331,8 @@ bimsDBPoolDelete(char *tsidb_name, char *yindb_name)
   for (j = 0; j < len_pool; j++) {
     if (ydb_pool && ydb_pool[j]) {
       if (!strcmp(ydb_pool[j]->db_name, yindb_name)) {
+	if (ydb_pool[i] == ydb)
+	  ydb = NULL;
 	ydb_pool[j]->Close(ydb_pool[j]);
 	/* only remove the first one found */
 	ydb_pool[j] = NULL;
@@ -347,26 +349,26 @@ bimsDBPoolDelete(char *tsidb_name, char *yindb_name)
 }
 
 int
-bimsReturnDBPool(struct TsiDB **tsidb, struct TsiYinDB **yindb)
+bimsReturnDBPool(struct TsiDB ***tsidb, struct TsiYinDB ***yindb)
 {
   int i, cnt=0;
 
   if (len_pool > 0) {
-    *tsidb = malloc(sizeof(struct TsiDB *) * len_pool);
-    *yindb = malloc(sizeof(struct TsiYinDB *) * len_pool);
+    *tsidb = malloc(sizeof(struct TsiDB **) * len_pool);
+    *yindb = malloc(sizeof(struct TsiYinDB **) * len_pool);
     for (i=0; i<len_pool; i++) {
       if (tdb_pool[i] != NULL && ydb_pool[i] != NULL) {
-        tsidb[cnt] = tdb_pool[i];
-        yindb[cnt] = ydb_pool[i];
+        *tsidb[cnt] = tdb_pool[i];
+        *yindb[cnt] = ydb_pool[i];
         cnt ++;
       }
     }
   }
   else if (tdb != NULL && ydb != NULL) {
-    *tsidb = malloc(sizeof(struct TsiDB *));
-    *yindb = malloc(sizeof(struct TsiYinDB *));
-    *tsidb = tdb;
-    *yindb = ydb;
+    *tsidb = malloc(sizeof(struct TsiDB **));
+    *yindb = malloc(sizeof(struct TsiYinDB **));
+    *tsidb[0] = tdb;
+    *yindb[0] = ydb;
     cnt = 1;
   }
   return cnt;
@@ -751,7 +753,7 @@ bimsYinChooseZhi(Yin yin)
   char zhi_buf[5];
   
   str = tabeYinLookupZhiList(yin);
-  if (!str) {
+  if (!tdb && !str) {
     return(NULL);
   }
   len = strlen((char *)str)/2;
@@ -1301,7 +1303,7 @@ bimsContextSmartEdit(struct bimsContext *bc)
   unsigned char tmp[TMP_BUFFER];
   int idebug = 0;
 
-  if (bc->no_smart_ed || (!tdb || !ydb)) {
+  if (bc->no_smart_ed || (len_pool==0 && (!tdb || !ydb))) {
     return;
   }
 
@@ -1611,7 +1613,7 @@ bimsToggleTsiSelection(unsigned long int bcid)
   int i, j, yl, rval, len=0, num=0, oldlen=0;
 
   bc = bimsGetBC(bcid);
-  if (bc->no_smart_ed || (!tdb || !ydb)) {
+  if (bc->no_smart_ed || (len_pool==0 && (!tdb || !ydb))) {
     return(BC_VAL_IGNORE);
   }
   if (bc->yinlen == 0 || bc->yinpos > bc->yinlen) {

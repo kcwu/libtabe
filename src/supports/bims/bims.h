@@ -32,7 +32,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: bims.h,v 1.4 2001/09/20 00:30:24 thhsieh Exp $
+ * $Id: bims.h,v 1.5 2001/09/22 13:05:53 thhsieh Exp $
  *
  */
 #ifndef __BIMS_H__
@@ -119,8 +119,8 @@ void                bimsFreeBC (unsigned long int bcid);
 int                 bimsDBPoolAppend(char *tsidb, char *yindb);
 int                 bimsDBPoolPrepend(char *tsidb, char *yindb);
 int                 bimsDBPoolDelete(char *tsidb, char *yindb);
-int                 bimsReturnDBPool(struct TsiDB **tsidb,
-                                     struct TsiYinDB **yindb);
+int                 bimsReturnDBPool(struct TsiDB ***tsidb,
+                                     struct TsiYinDB ***yindb);
 
 int                 bimsFeedKey(unsigned long int bcid, KeySym key);
 
