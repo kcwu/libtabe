@@ -1,7 +1,7 @@
 /*
  * Copyright 2001, TaBE Project, All Rights Reserved.
  * 
- * $Id: tsiguess.c,v 1.6 2003/05/07 14:14:13 kcwu Exp $  
+ * $Id: tsiguess.c,v 1.7 2003/05/07 14:15:28 kcwu Exp $  
  * 
  */
 #include <stdio.h>
@@ -22,7 +22,7 @@
 #define IS_BIG5LO(c) ( ( ((c) >= 0x40 && (c) <=0x7E ) ||             \
                          ((c) >= 0xA1 && (c) <=0xFE )    ) ? 1 : 0 )
  
-#define BIG5_TO_HEX (hi,lo) ( (hi) * 256 + (lo) )
+#define BIG5_TO_HEX(hi,lo) ( (hi) * 256 + (lo) )
                                                                                 
 #define IS_BIG5_SPACE(hex) ((hex)==0xA140)
 #define IS_BIG5_SYMBOL(hex) ((((hex) >= 0xA141 && (hex) <= 0xA3BF ) ||\
