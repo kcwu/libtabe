@@ -32,7 +32,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: bims.c,v 1.20 2002/08/14 11:09:45 kcwu Exp $
+ * $Id: bims.c,v 1.21 2004/09/20 06:16:48 kcwu Exp $
  */
 #ifdef HAVE_CONFIG_H
 #include "../../../config.h"
@@ -1935,6 +1935,32 @@ bimsToggleNoUpdate(unsigned long int bcid)
 }
 
 /*
+ * toggle into tsiguess mode
+ */
+int
+bimsToggleTsiGuess(unsigned long int bcid)
+{
+  struct bimsContext *bc;
+
+  bc = bimsGetBC(bcid);
+  bc->tsiguess = 1;
+  return(0);
+}
+
+/*
+ * toggle into no tsiguess mode
+ */
+int
+bimsToggleNoTsiGuess(unsigned long int bcid)
+{
+  struct bimsContext *bc;
+
+  bc = bimsGetBC(bcid);
+  bc->tsiguess = 0;
+  return(0);
+}
+
+/*
  * pindown a Zhi
  */
 int
@@ -2294,7 +2320,9 @@ bimsFetchText(DB_pool db, unsigned long int bcid, int len)
   bc->yinlen -= newlen;
 
   bimsContextSmartEdit(_db, bc);
-  bimsTsiGuess(_db->tdb, usertsidb, str);
+
+  if(bc->tsiguess)
+    bimsTsiGuess(_db->tdb, usertsidb, str);
 
   return(str);
 }

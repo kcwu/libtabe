@@ -9,12 +9,6 @@
 /* Define for FreeBSD system. */
 #undef FREEBSD
 
-/* Define if use BerkelyDB2. */
-#undef HAVE_DB2
-
-/* Define if use BerkeleyDB3/4. */
-#undef HAVE_DB3
-
 /* Define to 1 if you have the <db.h> header file. */
 #undef HAVE_DB_H
 

@@ -1,4 +1,4 @@
-0.2.6: 2004/09/19
+0.2.6: 2004/09/20
 ---------------------
 1. Remove the "-release" flag from libtool, such that the naming convention
    of libtabe/libbims is changed to be: libtabe.so.X.X.X/libbims.so.X.X.X.
@@ -53,7 +53,9 @@
 14. Builds without libbims if configure --without-x
     Builds with specific BerkeleyDB lib name if configure --with-db-name
     tsipackdb.in try all db*_dump, don't check db version anymore
-    
+
+15. Add bimsToggleTsiGuess() and bimsToggleNoTsiGuess() functions.    
+    Update autotools files.
 
 0.2.5: 2001/12/02
 ---------------------

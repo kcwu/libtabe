@@ -32,7 +32,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: bims.h,v 1.7 2001/12/31 16:05:41 thhsieh Exp $
+ * $Id: bims.h,v 1.8 2004/09/20 06:16:48 kcwu Exp $
  *
  */
 #ifndef __BIMS_H__
@@ -90,6 +90,8 @@ struct bimsContext {
 
   int                  updatedb;       /* should update db for usage    */
   struct bimsContext  *next;           /* link pointer                  */
+
+  int                  tsiguess;       /* guess tsi */
 };
 
 /* state for each bims client */
@@ -147,6 +149,8 @@ int                 bimsToggleSmartEditing  (unsigned long int bcid);
 int                 bimsToggleNoSmartEditing(unsigned long int bcid);
 int                 bimsToggleUpdate        (unsigned long int bcid);
 int                 bimsToggleNoUpdate      (unsigned long int bcid);
+int                 bimsToggleTsiGuess      (unsigned long int bcid);
+int                 bimsToggleNoTsiGuess    (unsigned long int bcid);
 int                 bimsPindown             (DB_pool db,
                                              unsigned long int bcid,
 					     ZhiCode z);
