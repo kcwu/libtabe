@@ -32,7 +32,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: bims.c,v 1.11 2001/11/02 12:45:29 thhsieh Exp $
+ * $Id: bims.c,v 1.12 2001/11/04 16:48:11 thhsieh Exp $
  */
 #ifdef HAVE_CONFIG_H
 #include "../../../config.h"
@@ -87,15 +87,16 @@ DB_pool
 bimsInit(char *tsidb_name, char *yindb_name)
 {
   struct _db_pool *_db;
-  struct TsiDB *tdb;
-  struct TsiYinDB *ydb; 
+  struct TsiDB *tdb=NULL;
+  struct TsiYinDB *ydb=NULL;
 
   if (!tsidb_name || !yindb_name) {
     return(NULL);
   }
-
+/*
   tdb = tabeTsiDBOpen(DB_TYPE_DB, tsidb_name,
 		      DB_FLAG_OVERWRITE|DB_FLAG_SHARED);
+*/
   /* fallback to readonly mode */
   if (!tdb) {
     tdb = tabeTsiDBOpen(DB_TYPE_DB, tsidb_name,
@@ -104,9 +105,10 @@ bimsInit(char *tsidb_name, char *yindb_name)
   if (!tdb) {
     return(NULL);
   }
-
+/*
   ydb = tabeTsiYinDBOpen(DB_TYPE_DB, yindb_name,
 			 DB_FLAG_OVERWRITE|DB_FLAG_SHARED);
+*/
   /* fallback to readonly mode */
   if (!ydb) {
     ydb = tabeTsiYinDBOpen(DB_TYPE_DB, yindb_name,

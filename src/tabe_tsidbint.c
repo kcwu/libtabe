@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tabe_tsidbint.c,v 1.5 2001/10/15 16:17:52 thhsieh Exp $
+ * $Id: tabe_tsidbint.c,v 1.6 2001/11/04 16:48:10 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -184,8 +184,10 @@ tabeTsiDBOpen(int type, const char *db_name, int flags)
       tsidb->db_name = (char *)strdup(db_name);
       tsidb->dbp = (void *)dbp;
     }
-    else
+    else {
       free(tsidb);
+      tsidb = NULL;
+    }
     break;
   default:
     fprintf(stderr, "tabeTsiDBOpen(): Unknown DB type.\n");
