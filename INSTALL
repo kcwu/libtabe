@@ -25,6 +25,8 @@ To install, please follow these steps:
 
    --with-dblib=<PATH>	set the Berkeley DB 2 library path.
 
+   --with-dbbin=<PATH>	set the Berkeley DB 2 binary path.
+
 2. make; make install
 
 
