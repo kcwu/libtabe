@@ -3,7 +3,11 @@
 1. Remove the "-release" flag from libtool, such that the naming convention
    of libtabe/libbims is changed to be: libtabe.so.X.X.X/libbims.so.X.X.X.
    Add release number information into utilities.
-   Thansk to Roger So <roger.so@sw-linux.com>.
+   Thanks to Roger So <roger.so@sw-linux.com>.
+
+2. Porting to DB3-3.3.11: DB->stat() only takes 3 arguements.
+   Thanks to Pofeng Lee <informer@ns1.m2000.idv.tw>
+	     Rui-Xiang Guo <rxg@ms25.url.com.tw>
 
 
 0.2.5: 2001/12/02

@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tabe_tsidbint.c,v 1.7 2001/11/11 12:33:07 thhsieh Exp $
+ * $Id: tabe_tsidbint.c,v 1.8 2001/12/07 15:20:05 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -265,7 +265,11 @@ tabeTsiDBRecordNumber(struct TsiDB *tsidb)
   switch(tsidb->type) {
   case DB_TYPE_DB:
     dbp = (DB *)tsidb->dbp;
+#ifdef HAVE_DB3_STAT3
+    errno = dbp->stat(dbp, &sp, 0);
+#else
     errno = dbp->stat(dbp, &sp, NULL, 0);
+#endif
     if (!errno) {
 #ifndef HAVE_DB3
       return(sp->bt_nrecs);

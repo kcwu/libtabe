@@ -21,6 +21,8 @@
 
 #undef HAVE_DB3
 
+#undef HAVE_DB3_STAT3
+
 #undef LINUX
 
 #undef FREEBSD
