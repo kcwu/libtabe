@@ -32,7 +32,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: bims.c,v 1.9 2001/09/23 15:44:41 thhsieh Exp $
+ * $Id: bims.c,v 1.10 2001/10/14 11:32:25 thhsieh Exp $
  */
 #ifdef HAVE_CONFIG_H
 #include "../../../config.h"
@@ -94,19 +94,23 @@ bimsInit(char *tsidb_name, char *yindb_name)
     return(NULL);
   }
 
-  tdb = tabeTsiDBOpen(DB_TYPE_DB, tsidb_name, DB_FLAG_OVERWRITE);
+  tdb = tabeTsiDBOpen(DB_TYPE_DB, tsidb_name,
+		      DB_FLAG_OVERWRITE|DB_FLAG_SHARED);
   /* fallback to readonly mode */
   if (!tdb) {
-    tdb = tabeTsiDBOpen(DB_TYPE_DB, tsidb_name, DB_FLAG_READONLY);
+    tdb = tabeTsiDBOpen(DB_TYPE_DB, tsidb_name,
+			DB_FLAG_READONLY|DB_FLAG_SHARED);
   }
   if (!tdb) {
     return(NULL);
   }
 
-  ydb = tabeTsiYinDBOpen(DB_TYPE_DB, yindb_name, DB_FLAG_OVERWRITE);
+  ydb = tabeTsiYinDBOpen(DB_TYPE_DB, yindb_name,
+			 DB_FLAG_OVERWRITE|DB_FLAG_SHARED);
   /* fallback to readonly mode */
   if (!ydb) {
-    ydb = tabeTsiYinDBOpen(DB_TYPE_DB, yindb_name, DB_FLAG_READONLY);
+    ydb = tabeTsiYinDBOpen(DB_TYPE_DB, yindb_name,
+			   DB_FLAG_READONLY|DB_FLAG_SHARED);
   }
   if (!ydb) {
     tdb->Close(tdb);
@@ -171,12 +175,12 @@ bimsDBPoolAppend(DB_pool db, char *tsidb_name, char *yindb_name)
     return(-1);
   }
 
-  t = tabeTsiDBOpen(DB_TYPE_DB, tsidb_name, DB_FLAG_READONLY);
+  t = tabeTsiDBOpen(DB_TYPE_DB, tsidb_name, DB_FLAG_READONLY|DB_FLAG_SHARED);
   if (!t) {
     return(-1);
   }
 
-  y = tabeTsiYinDBOpen(DB_TYPE_DB, yindb_name, DB_FLAG_READONLY);
+  y = tabeTsiYinDBOpen(DB_TYPE_DB, yindb_name, DB_FLAG_READONLY|DB_FLAG_SHARED);
   if (!y) {
     t->Close(t);
     return(-1);
@@ -246,12 +250,12 @@ bimsDBPoolPrepend(DB_pool db, char *tsidb_name, char *yindb_name)
     return(-1);
   }
 
-  t = tabeTsiDBOpen(DB_TYPE_DB, tsidb_name, DB_FLAG_READONLY);
+  t = tabeTsiDBOpen(DB_TYPE_DB, tsidb_name, DB_FLAG_READONLY|DB_FLAG_SHARED);
   if (!t) {
     return(-1);
   }
 
-  y = tabeTsiYinDBOpen(DB_TYPE_DB, yindb_name, DB_FLAG_READONLY);
+  y = tabeTsiYinDBOpen(DB_TYPE_DB, yindb_name, DB_FLAG_READONLY|DB_FLAG_SHARED);
   if (!y) {
     t->Close(t);
     return(-1);

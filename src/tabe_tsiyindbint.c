@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tabe_tsiyindbint.c,v 1.4 2001/09/23 15:44:40 thhsieh Exp $
+ * $Id: tabe_tsiyindbint.c,v 1.5 2001/10/14 11:32:25 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -43,6 +43,14 @@ struct TsiYinDBDataDB {
   unsigned long int  tsinum;
 };
 
+struct _tabe_ref_YDBpool {
+    char *db_name;
+    DB *dbp;
+    int flags;
+    int ref;
+    struct _tabe_ref_YDBpool *next;
+} *_tabe_rydb;
+
 static int  TsiYinDBStoreTsiYinDB(struct TsiYinDB *tsiyindb,
 				  struct TsiYinInfo *tsiyin);
 static int  TsiYinDBLookupTsiYinDB(struct TsiYinDB *tsiyindb,
@@ -56,11 +64,84 @@ static void TsiYinDBUnpackDataDB(struct TsiYinInfo *tsiyin, DBT *dat);
  * return pointer to TsiYinDB if success, NULL if failed
  *
  */
+static DB *
+tabe_tsiyinDB_DoOpen(const char *db_name, int flags)
+{
+  DB *dbp=NULL;
+
+#ifdef HAVE_DB3
+  /* create a db handler */
+  if ((errno = db_create(&dbp, NULL, 0)) != 0) {
+    fprintf(stderr, "db_create: %s\n", db_strerror(errno));
+    return (NULL);
+  }
+#endif
+
+  if (flags & DB_FLAG_CREATEDB) {
+    if (flags & DB_FLAG_READONLY) {
+      return(NULL);
+    }
+    else {
+#ifndef HAVE_DB3
+      errno = db_open(db_name, DB_BTREE, DB_CREATE, 0644, NULL, NULL, &dbp);
+#else
+      errno = dbp->open(dbp, db_name, NULL, DB_BTREE, DB_CREATE, 0644);
+#endif
+    }
+  }
+  else {
+    if (flags & DB_FLAG_READONLY) {
+#ifndef HAVE_DB3
+      errno = db_open(db_name, DB_BTREE, DB_RDONLY, 0444, NULL, NULL, &dbp);
+#else
+      errno = dbp->open(dbp, db_name, NULL, DB_BTREE, DB_RDONLY, 0444);
+#endif
+    }
+    else {
+#ifndef HAVE_DB3
+      errno = db_open(db_name, DB_BTREE, 0, 0644, NULL, NULL, &dbp);
+#else
+      errno = dbp->open(dbp, db_name, NULL, DB_BTREE, 0, 0644);
+#endif
+    }
+  }
+  if (errno > 0) {
+    fprintf(stderr, "tabeTsiYinDBOpen(): Can not open DB file %s (%s).\n",
+	    db_name, strerror(errno));
+    return(NULL);
+  }
+  if (errno < 0) {
+    /* DB specific errno */
+#ifndef HAVE_DB3
+    fprintf(stderr, "tabeTsiYinDBOpen(): DB error opening DB File %s.\n",
+	    db_name);
+#else
+    fprintf(stderr, "tabeTsiYinDBOpen(): %s.\n", db_strerror(errno));
+#endif
+    return(NULL);
+  }
+
+  return dbp;
+}
+
+static struct _tabe_ref_YDBpool *
+tabe_search_rydbpool(const char *db_name, int flags)
+{
+  struct _tabe_ref_YDBpool *rydbp = _tabe_rydb;
+
+  while (rydbp) {
+    if (strcmp(rydbp->db_name, db_name)==0 && rydbp->flags==flags)
+      break;
+    rydbp = rydbp->next;
+  }
+  return rydbp;
+}
+
 struct TsiYinDB *
 tabeTsiYinDBOpen(int type, const char *db_name, int flags)
 {
-  struct TsiYinDB *tsiyindb;
-  DB *dbp;
+  struct TsiYinDB *tsiyindb=NULL;
+  DB *dbp=NULL;
 
   switch(type) {
   case DB_TYPE_DB:
@@ -81,76 +162,48 @@ tabeTsiYinDBOpen(int type, const char *db_name, int flags)
     tsiyindb->CursorNext = tabeTsiYinDBCursorNext;
     tsiyindb->CursorPrev = tabeTsiYinDBCursorPrev;
 
-#ifdef HAVE_DB3
-    /* create a db handler */
-    if ((errno = db_create(&dbp, NULL, 0)) != 0) {
-      fprintf(stderr, "db_create: %s\n", db_strerror(errno));
-      return (NULL);
-    }
-#endif
-
-    if (tsiyindb->flags & DB_FLAG_CREATEDB) {
-      if (tsiyindb->flags & DB_FLAG_READONLY) {
-        return(NULL);
-      }
-      else {
-#ifndef HAVE_DB3
-	errno = db_open(db_name, DB_BTREE, DB_CREATE,
-			0644, NULL, NULL, &dbp);
-#else
-	errno = dbp->open(dbp, db_name, NULL, DB_BTREE, DB_CREATE, 0644);
-#endif
-      }
-    }
+    if (! (tsiyindb->flags & DB_FLAG_SHARED))
+      dbp = tabe_tsiyinDB_DoOpen(db_name, tsiyindb->flags);
     else {
-      if (tsiyindb->flags & DB_FLAG_READONLY) {
-#ifndef HAVE_DB3
-	errno = db_open(db_name, DB_BTREE, DB_RDONLY, 0444, NULL, NULL, &dbp);
-#else
-	errno = dbp->open(dbp, db_name, NULL, DB_BTREE, DB_RDONLY, 0444);
-#endif
+      struct _tabe_ref_YDBpool *rydbp;
+      if ((rydbp = tabe_search_rydbpool(db_name, tsiyindb->flags))== NULL) {
+	dbp = tabe_tsiyinDB_DoOpen(db_name, tsiyindb->flags);
+	if (dbp != NULL) {
+	  rydbp = malloc(sizeof(struct _tabe_ref_YDBpool));
+	  rydbp->db_name = (char *)strdup(db_name);
+	  rydbp->dbp = dbp;
+	  rydbp->flags = flags;
+	  rydbp->ref = 1;
+	  rydbp->next = _tabe_rydb;
+	  _tabe_rydb = rydbp;
+	}
       }
       else {
-#ifndef HAVE_DB3
-	errno = db_open(db_name, DB_BTREE, 0        , 0644, NULL, NULL, &dbp);
-#else
-	errno = dbp->open(dbp, db_name, NULL, DB_BTREE, 0, 0644);
-#endif
+	dbp = rydbp->dbp;
+	rydbp->ref ++;
       }
     }
-    if (errno > 0) {
-      fprintf(stderr, "tabeTsiYinDBOpen(): Can not open DB file %s (%s).\n",
-	     db_name, strerror(errno));
-      free(tsiyindb);
-      return(NULL);
+
+    if (dbp) {
+      tsiyindb->db_name = (char *)strdup(db_name);
+      tsiyindb->dbp = (void *)dbp;
     }
-    if (errno < 0) {
-      /* DB specific errno */
-#ifndef HAVE_DB3
-      fprintf(stderr, "tabeTsiYinDBOpen(): DB error opening DB File %s.\n",
-	      db_name);
-#else
-      fprintf(stderr, "tabeTsiYinDBOpen(): %s.\n", db_strerror(errno));
-#endif
+    else
       free(tsiyindb);
-      return(NULL);
-    }
-    tsiyindb->db_name = (char *)strdup(db_name);
-    tsiyindb->dbp = (void *)dbp;
-    return(tsiyindb);
+    break;
   default:
     fprintf(stderr, "tabeTsiYinDBOpen(): Unknown DB type.\n");
     break;
   }
 
-  return(NULL);
+  return(tsiyindb);
 }
 
 /*
  * close and flush DB file
  */
 static void
-tabeTsiYinDBClose(struct TsiYinDB *tsiyindb)
+tabe_tsiyinDB_DoClose(struct TsiYinDB *tsiyindb)
 {
   DB  *dbp;
   DBC *dbcp;
@@ -176,6 +229,26 @@ tabeTsiYinDBClose(struct TsiYinDB *tsiyindb)
     break;
   }
   return;
+}
+
+static void
+tabeTsiYinDBClose(struct TsiYinDB *tsiyindb)
+{
+  if (! (tsiyindb->flags & DB_FLAG_SHARED))
+    tabe_tsiyinDB_DoClose(tsiyindb);
+  else {
+    struct _tabe_ref_YDBpool *rydbp;
+    rydbp = tabe_search_rydbpool(tsiyindb->db_name, tsiyindb->flags);
+    if (rydbp) {
+      rydbp->ref --;
+      if (rydbp->ref == 0) {
+	tabe_tsiyinDB_DoClose(tsiyindb);
+	_tabe_rydb = rydbp->next;
+	free(rydbp->db_name);
+	free(rydbp);
+      }
+    }
+  }
 }
 
 /*

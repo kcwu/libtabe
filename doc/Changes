@@ -25,6 +25,10 @@
 	tabeTsiDBClose() should free tsidb also.
 	tabeTsiYinDBClose() should free tsiyindb also.
 
+6. libtabe multiple accessment to the same db file support:
+	Add flag: DB_FLAG_SHARED, to enable db file shared support.
+	All tabeTsiDBOpen() & tabeTsiYinDBOpen() in libbims use DB_FLAG_SHARED.
+
 
 0.2.3: 2001/08/20
 ---------------------

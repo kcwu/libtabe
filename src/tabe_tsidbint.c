@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tabe_tsidbint.c,v 1.3 2001/09/23 15:44:40 thhsieh Exp $
+ * $Id: tabe_tsidbint.c,v 1.4 2001/10/14 11:32:25 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -41,6 +41,14 @@ struct TsiDBDataDB {
 */
 };
 
+struct _tabe_ref_DBpool {
+    char *db_name;
+    DB *dbp;
+    int flags;
+    int ref;
+    struct _tabe_ref_DBpool *next;
+} *_tabe_rdb;
+
 static int  TsiDBStoreTsiDB(struct TsiDB *tsidb, struct TsiInfo *tsi);
 static int  TsiDBLookupTsiDB(struct TsiDB *tsidb, struct TsiInfo *tsi);
 static void TsiDBPackDataDB(struct TsiInfo *tsi, DBT *dat);
@@ -52,11 +60,83 @@ static void TsiDBUnpackDataDB(struct TsiInfo *tsi, DBT *dat);
  * return pointer to TsiDB if success, NULL if failed
  *
  */
+static DB *
+tabe_tsiDB_DoOpen(const char *db_name, int flags)
+{
+  DB *dbp=NULL;
+
+#ifdef HAVE_DB3
+  /* create a db handler */
+  if ((errno = db_create(&dbp, NULL, 0)) != 0) {
+    fprintf(stderr, "db_create: %s\n", db_strerror(errno));
+    return (NULL);
+  }
+#endif
+
+  if (flags & DB_FLAG_CREATEDB) {
+    if (flags & DB_FLAG_READONLY) {
+      return(NULL);
+    }
+    else {
+#ifndef HAVE_DB3
+      errno = db_open(db_name, DB_BTREE, DB_CREATE, 0644, NULL, NULL, &dbp);
+#else
+      errno = dbp->open(dbp, db_name, NULL, DB_BTREE, DB_CREATE, 0644);
+#endif
+    }
+  }
+  else {
+    if (flags & DB_FLAG_READONLY) {
+#ifndef HAVE_DB3
+      errno = db_open(db_name, DB_BTREE, DB_RDONLY, 0444, NULL, NULL, &dbp);
+#else
+      errno = dbp->open(dbp, db_name, NULL, DB_BTREE, DB_RDONLY, 0444);
+#endif
+    }
+    else {
+#ifndef HAVE_DB3
+      errno = db_open(db_name, DB_BTREE, 0, 0644, NULL, NULL, &dbp);
+#else
+      errno = dbp->open(dbp, db_name, NULL, DB_BTREE, 0, 0644);
+#endif
+    }
+  }
+  if (errno > 0) {
+    fprintf(stderr, "tabeTsiDBOpen(): Can not open DB file %s (%s).\n",
+	    db_name, strerror(errno));
+    return(NULL);
+  }
+  if (errno < 0) {
+    /* DB specific errno */
+#ifndef HAVE_DB3
+    fprintf(stderr, "tabeTsiDBOpen(): DB error opening DB File %s.\n", db_name);
+#else
+    fprintf(stderr, "tabeTsiDBOpen(): %s.\n", db_strerror(errno));
+#endif
+    return(NULL);
+  }
+
+  return dbp;
+}
+
+static struct _tabe_ref_DBpool *
+tabe_search_rdbpool(const char *db_name, int flags)
+{
+  struct _tabe_ref_DBpool *rdbp = _tabe_rdb;
+
+  while (rdbp) {
+    if (strcmp(rdbp->db_name, db_name)==0 && rdbp->flags==flags)
+      break;
+    rdbp = rdbp->next;
+  }
+  return rdbp;
+}
+
 struct TsiDB *
 tabeTsiDBOpen(int type, const char *db_name, int flags)
 {
-  struct TsiDB *tsidb;
-  DB *dbp;
+  struct TsiDB *tsidb=NULL;
+  DB *dbp=NULL;
 
   switch(type) {
   case DB_TYPE_DB:
@@ -77,77 +157,48 @@ tabeTsiDBOpen(int type, const char *db_name, int flags)
     tsidb->CursorNext = tabeTsiDBCursorNext;
     tsidb->CursorPrev = tabeTsiDBCursorPrev;
 
-#ifdef HAVE_DB3
-    /* create a db handler */
-    if ((errno = db_create(&dbp, NULL, 0)) != 0) {
-      fprintf(stderr, "db_create: %s\n", db_strerror(errno));
-      return (NULL);
-    }
-#endif
-
-    if (tsidb->flags & DB_FLAG_CREATEDB) {
-      if (tsidb->flags & DB_FLAG_READONLY) {
-        return(NULL);
-      }
-      else {
-#ifndef HAVE_DB3
-	errno = db_open(db_name, DB_BTREE, DB_CREATE,
-			0644, NULL, NULL, &dbp);
-#else
-	errno = dbp->open(dbp, db_name, NULL, DB_BTREE, DB_CREATE, 0644);
-#endif
-      }
-    }
+    if (! (tsidb->flags & DB_FLAG_SHARED))
+      dbp = tabe_tsiDB_DoOpen(db_name, tsidb->flags);
     else {
-      if (tsidb->flags & DB_FLAG_READONLY) {
-#ifndef HAVE_DB3
-	errno = db_open(db_name, DB_BTREE, DB_RDONLY, 0444, NULL, NULL, &dbp);
-#else
-	errno = dbp->open(dbp, db_name, NULL, DB_BTREE, DB_RDONLY, 0444);
-#endif
+      struct _tabe_ref_DBpool *rdbp;
+      if ((rdbp = tabe_search_rdbpool(db_name, tsidb->flags))== NULL) {
+	dbp = tabe_tsiDB_DoOpen(db_name, tsidb->flags);
+	if (dbp != NULL) {
+	  rdbp = malloc(sizeof(struct _tabe_ref_DBpool));
+          rdbp->db_name = (char *)strdup(db_name);
+	  rdbp->dbp = dbp;
+	  rdbp->flags = flags;
+	  rdbp->ref = 1;
+	  rdbp->next = _tabe_rdb;
+	  _tabe_rdb = rdbp;
+	}
       }
       else {
-#ifndef HAVE_DB3
-	errno = db_open(db_name, DB_BTREE, 0        , 0644, NULL, NULL, &dbp);
-#else
-	errno = dbp->open(dbp, db_name, NULL, DB_BTREE, 0, 0644);
-#endif
+	dbp = rdbp->dbp;
+	rdbp->ref ++;
       }
     }
 
-    if (errno > 0) {
-      fprintf(stderr, "tabeTsiDBOpen(): Can not open DB file %s (%s).\n",
-	     db_name, strerror(errno));
-      free(tsidb);
-      return(NULL);
+    if (dbp) {
+      tsidb->db_name = (char *)strdup(db_name);
+      tsidb->dbp = (void *)dbp;
     }
-    if (errno < 0) {
-      /* DB specific errno */
-#ifndef HAVE_DB3
-      fprintf(stderr, "tabeTsiDBOpen(): DB error opening DB File %s.\n",
-	      db_name);
-#else
-      fprintf(stderr, "tabeTsiDBOpen(): %s.\n", db_strerror(errno));
-#endif
+    else
       free(tsidb);
-      return(NULL);
-    }
-    tsidb->db_name = (char *)strdup(db_name);
-    tsidb->dbp = (void *)dbp;
-    return(tsidb);
+    break;
   default:
     fprintf(stderr, "tabeTsiDBOpen(): Unknown DB type.\n");
     break;
   }
 
-  return(NULL);
+  return(tsidb);
 }
 
 /*
  * close and flush DB file
  */
 static void
-tabeTsiDBClose(struct TsiDB *tsidb)
+tabe_tsiDB_DoClose(struct TsiDB *tsidb)
 {
   DB  *dbp;
   DBC *dbcp;
@@ -174,6 +225,26 @@ tabeTsiDBClose(struct TsiDB *tsidb)
     break;
   }
   return;
+}
+
+static void
+tabeTsiDBClose(struct TsiDB *tsidb)
+{
+  if (! (tsidb->flags & DB_FLAG_SHARED))
+    tabe_tsiDB_DoClose(tsidb);
+  else {
+    struct _tabe_ref_DBpool *rdbp;
+    rdbp = tabe_search_rdbpool(tsidb->db_name, tsidb->flags);
+    if (rdbp) {
+      rdbp->ref --;
+      if (rdbp->ref == 0) {
+	tabe_tsiDB_DoClose(tsidb);
+	_tabe_rdb = rdbp->next;
+	free(rdbp->db_name);
+	free(rdbp);
+      }
+    }
+  }
 }
 
 /*

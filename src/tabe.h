@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tabe.h,v 1.3 2001/09/20 00:30:23 thhsieh Exp $
+ * $Id: tabe.h,v 1.4 2001/10/14 11:32:25 thhsieh Exp $
  *
  */
 #ifndef __TABE_H__
@@ -83,10 +83,11 @@ enum {
   DB_TYPE_LAST
 };
 
-#define DB_FLAG_OVERWRITE 0x1
-#define DB_FLAG_CREATEDB  0x2
-#define DB_FLAG_READONLY  0x4
-#define DB_FLAG_NOSYNC	  0x8
+#define DB_FLAG_OVERWRITE 0x01
+#define DB_FLAG_CREATEDB  0x02
+#define DB_FLAG_READONLY  0x04
+#define DB_FLAG_NOSYNC	  0x08
+#define DB_FLAG_SHARED    0x10
 
 struct TsiDB       *tabeTsiDBOpen(int type, const char *db_name, int flags);
 
