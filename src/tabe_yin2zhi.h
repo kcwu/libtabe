@@ -8,7 +8,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tabe_yin2zhi.h,v 1.1 2000/12/09 09:14:13 thhsieh Exp $
+ * $Id: tabe_yin2zhi.h,v 1.2 2001/04/30 15:15:57 thhsieh Exp $
  *
  */
 
@@ -330,7 +330,7 @@ static ZhiCode codelist164[] = {
  0xbfd6, 0xabfb, 0xc5e2, 0xbff3, 0xea4d,
  0xeda2, 0xeceb, 0xae67, 0xbee7, 0xf1ac,
  0xde6f, 0xeee4, 0xf667, 0xea45, 0xf165,
- 0xd44f, 0xd9df, 0xe965, 0xe9ac,
+ 0xd44f, 0xd9df, 0xe965, 0xe9ac, 0xb247,
 };
 
 static ZhiCode codelist170[] = {
@@ -906,10 +906,10 @@ static ZhiCode codelist525[] = {
 };
 
 static ZhiCode codelist528[] = {
- 0xacc1, 0xbcb7, 0xade9, 0xb5d4, 0xb2da,
- 0xe567, 0xd2dc, 0xbcbd, 0xafeb, 0xdeeb,
- 0xd7b7, 0xf0d4, 0xf85b, 0xd471, 0xcf59,
- 0xf351, 0xcc69,
+ 0xaa69, 0xacc1, 0xbcb7, 0xade9, 0xb5d4,
+ 0xb2da, 0xe567, 0xd2dc, 0xbcbd, 0xafeb,
+ 0xdeeb, 0xd7b7, 0xf0d4, 0xf85b, 0xd471,
+ 0xcf59, 0xf351, 0xcc69,
 };
 
 static ZhiCode codelist530[] = {
@@ -7460,7 +7460,7 @@ struct YinZhi _YinZhiTable[] = {
   {     160,   3, codelist160 },
   {     162,   6, codelist162 },
   {     163,   5, codelist163 },
-  {     164,  24, codelist164 },
+  {     164,  25, codelist164 },
   {     170,   4, codelist170 },
   {     184,  12, codelist184 },
   {     186,  34, codelist186 },
@@ -7543,7 +7543,7 @@ struct YinZhi _YinZhiTable[] = {
   {     523,   3, codelist523 },
   {     524,   9, codelist524 },
   {     525,   4, codelist525 },
-  {     528,  17, codelist528 },
+  {     528,  18, codelist528 },
   {     530,  47, codelist530 },
   {     531,   3, codelist531 },
   {     532,  11, codelist532 },

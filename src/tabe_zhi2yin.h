@@ -9,7 +9,7 @@
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  * Copyright 1999, Yung-Ching Hsiao, All Rights Reserved.
  *
- * $Id: tabe_zhi2yin.h,v 1.1 2000/12/09 09:14:16 thhsieh Exp $
+ * $Id: tabe_zhi2yin.h,v 1.2 2001/04/30 15:15:57 thhsieh Exp $
  *
  */
 
@@ -515,7 +515,7 @@ static Yin _yinlistA6E2[] = { 10780,                      };
 static Yin _yinlistA6E3[] = { 16428, 16516,               };
 static Yin _yinlistA6E4[] = { 22323, 24930,               };
 static Yin _yinlistA6E5[] = { 23715, 23972,               };
-static Yin _yinlistA6E6[] = { 54874, 54876, 56546, 56448, };
+static Yin _yinlistA6E6[] = { 54874, 54876, 56546, 56548, };
 static Yin _yinlistA6E7[] = { 16512, 16516,               };
 static Yin _yinlistA6E8[] = {  7296,                      };
 static Yin _yinlistA6E9[] = {  6856,                      };
@@ -1052,7 +1052,7 @@ static Yin _yinlistAA65[] = {  5658,                      };
 static Yin _yinlistAA66[] = {  4864,                      };
 static Yin _yinlistAA67[] = {  7752,                      };
 static Yin _yinlistAA68[] = {  7739,                      };
-static Yin _yinlistAA69[] = {  1040,                      };
+static Yin _yinlistAA69[] = { 16912, 17424,               };
 static Yin _yinlistAA6A[] = {  1556,                      };
 static Yin _yinlistAA6B[] = { 34826, 34827, 34828,        };
 static Yin _yinlistAA6C[] = {  5986,                      };
@@ -2274,7 +2274,7 @@ static Yin _yinlistB243[] = {  7370,                      };
 static Yin _yinlistB244[] = { 20698, 20700,               };
 static Yin _yinlistB245[] = {  8530,                      };
 static Yin _yinlistB246[] = { 10594,                      };
-static Yin _yinlistB247[] = {   132,                      };
+static Yin _yinlistB247[] = { 16516, 16548,               };
 static Yin _yinlistB248[] = {  2636,                      };
 static Yin _yinlistB249[] = {  3163,                      };
 static Yin _yinlistB24A[] = {   384,                      };

@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tabe_chu.c,v 1.1 2000/12/09 09:14:11 thhsieh Exp $
+ * $Id: tabe_chu.c,v 1.2 2001/04/30 15:15:57 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -98,7 +98,7 @@ int
 tabeChuInfoToChunkInfo(struct ChuInfo *chu)
 {
   int i;
-  ZhiStr p, c;
+  ZhiStr p, q, c;
 
   if (chu->num_chunk) {
     for (i = 0; i < chu->num_chunk; i++) {
@@ -109,14 +109,41 @@ tabeChuInfoToChunkInfo(struct ChuInfo *chu)
     chu->chunk = (struct ChunkInfo *)NULL;
   }
 
-  p = chu->chu;
+  p = q = chu->chu;
 
   while(1) {
+    q = p;
     p = tabeChunkGet(p, &c);
     if (!p) {
+      /* check if there is a non-big5 chunk */
+      if (strlen(q) > 0) { /* yes */
+	/* q is the string */
+	chu->chunk = (struct ChunkInfo *)
+	  realloc(chu->chunk, sizeof(struct ChunkInfo)*(chu->num_chunk+1));
+	(chu->chunk[chu->num_chunk]).chunk = strdup(q);
+	(chu->chunk[chu->num_chunk]).num_tsi = -1;
+	(chu->chunk[chu->num_chunk]).tsi = (struct TsiInfo *)NULL;
+	chu->num_chunk++;
+      }
       break;
     }
     else {
+      if ((p - q) != strlen(c)) { /* a non-big5 chunk occurs */
+        char *foo;
+
+	/* the non-big5 chunk is between q and p-strlen(c) */
+	chu->chunk = (struct ChunkInfo *)
+	  realloc(chu->chunk, sizeof(struct ChunkInfo)*(chu->num_chunk+1));
+	foo = (char *)malloc(sizeof(char)*(p-strlen(c)-q+1+1));
+	memset(foo, 0, p-strlen(c)-q+1+1);
+	memcpy(foo, q, p-strlen(c)-q);
+	(chu->chunk[chu->num_chunk]).chunk = foo;
+	(chu->chunk[chu->num_chunk]).num_tsi = -1;
+	(chu->chunk[chu->num_chunk]).tsi = (struct TsiInfo *)NULL;
+	chu->num_chunk++;
+      }
+
+      /* big5 chunk */
       chu->chunk = (struct ChunkInfo *)
 	realloc(chu->chunk, sizeof(struct ChunkInfo)*(chu->num_chunk+1));
       (chu->chunk[chu->num_chunk]).chunk = c;
