@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tsiadd.c,v 1.3 2001/01/29 16:29:34 thhsieh Exp $
+ * $Id: tsiadd.c,v 1.4 2001/02/11 07:53:26 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -341,6 +341,9 @@ archive(struct TsiDB *db, FILE *fp, int ref, int tsiyin, int verbose)
       while ((p = (unsigned char *)strstr((char *)p, "¡@"))) {
         p++;
         l++;
+      }
+      if(verbose && (l+1)%len!=0) {
+	fprintf(stderr, "Warning: number of yins is not match: %s", buf);
       }
       tsi->yinnum = (l+1)/len;
       tsi->yindata = (Yin *)realloc(tsi->yindata, sizeof(Yin)*(l+1));

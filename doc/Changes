@@ -9,6 +9,9 @@
 3. Fix bug of tsiadd.c for comment out a whole line in tsi.src.
    Add tsiadd.c a verbose check for invalid Yin's.
 
+4. Add check for "number of yins is not match for tsi" in tsiadd.c.
+   Thanks to Kuang-che Wu <kcwu@ck.tp.edu.tw>.
+
 
 0.2.1:  2001/01/03
 ---------------------
