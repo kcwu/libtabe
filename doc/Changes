@@ -18,6 +18,9 @@
 
 7. Remove Xlib checking from configure.in.
 
+8. Fix bug in tabe_zhi2yin.h: _yinlistA94D[].
+   Thanks to Kuang-che Wu <kcwu@ck.tp.edu.tw>.
+
 
 0.2.2:  2001/06/07
 ---------------------
