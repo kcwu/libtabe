@@ -2,7 +2,7 @@
 # Copyright 1999, TaBE Project, All Rights Reserved.
 # Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
 #
-# $Id: Makefile.in,v 1.7 2001/12/04 15:05:14 thhsieh Exp $
+# $Id: Makefile.in,v 1.8 2004/09/20 03:25:49 kcwu Exp $
 #
 CC              = @CC@
 CFLAGS          = @CFLAGS@
@@ -51,7 +51,7 @@ INCLUDES    =	tabe.h
 #
 # Over all targets.
 #
-all: $(LIBNAME) bims
+all: $(LIBNAME) @build_supports@
 
 $(LIBNAME): $(LIBOBJS)
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(LIBOBJS) -rpath $(libdir) \
@@ -90,17 +90,17 @@ tabe_chu.lo: tabe_chu.c tabe.h
 .PHONY: clean distclean install
 clean:
 	$(RM) $(LIBNAME) $(TESTPRG) $(TESTOBJ) $(LIBOBJS) *.o .libs *~ core
-	(cd supports/bims; $(MAKE) clean)
+	for i in @build_supports@; do cd supports/$$i; $(MAKE) clean; done
 
 distclean:
 	$(RM) $(LIBNAME) $(TESTPRG) $(TESTOBJ) $(LIBOBJS) *.o .libs *~ core
 	$(RM) Makefile
-	(cd supports/bims; $(MAKE) distclean)
+	for i in @build_supports@; do cd supports/$$i; $(MAKE) distclean; done
 
 install: all
 	if [ ! -d $(libdir) ]; then $(INSTALL) -d $(libdir); fi
 	if [ ! -d $(includedir) ]; then $(INSTALL) -d $(includedir); fi
 	$(LIBTOOL) --mode=install $(INSTALL_DATA) $(LIBNAME) $(libdir)
 	$(INSTALL_DATA) $(INCLUDES) $(includedir)
-	(cd supports/bims; $(MAKE) install)
+	for i in @build_supports@; do cd supports/$$i; $(MAKE) install; done
 
