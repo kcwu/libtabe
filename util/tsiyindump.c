@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tsiyindump.c,v 1.4 2001/11/11 12:33:09 thhsieh Exp $
+ * $Id: tsiyindump.c,v 1.5 2001/12/04 15:05:20 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -16,6 +16,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include "../src/version.h"
 
 #include <db.h>
 #include <tabe.h>
@@ -23,6 +24,7 @@
 void
 usage(void)
 {
+  printf("tsiyindump: libtabe-%s\n", RELEASE_VER);
   printf("Usage: tsiyindump -d <TsiDB> -y <TsiYinDB>\n");
   printf("   -d <TsiDB>     \t path to TsiDB\n");
   printf("   -y <TsiYinDB>  \t path to TsiYinDB\n");

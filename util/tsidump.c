@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tsidump.c,v 1.3 2001/11/11 12:33:09 thhsieh Exp $
+ * $Id: tsidump.c,v 1.4 2001/12/04 15:05:20 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -19,10 +19,12 @@
 
 #include <db.h>
 #include <tabe.h>
+#include "../src/version.h"
 
 void
 usage(void)
 {
+  printf("tsidump: libtabe-%s\n", RELEASE_VER);
   printf("Usage: tsidump -d <TsiDB> [-f output file -ry]\n");
   printf("   -d <TsiDB>     \t path to TsiDB\n");
   printf("   -f <output file>\t output file in plain text (default: stdout)\n");

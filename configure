@@ -800,7 +800,7 @@ fi
 
 
 verf='src/version.h'
-RELEASE_VER=`awk '{if (/RELEASE_VER/) print $3}' $verf`
+RELEASE_VER=`awk '{if (/RELEASE_VER/) print $3}' $verf | sed 's/"\(.*\)"/\1/'`
 CURRENT_VER=`awk '{if (/CURRENT_VER/) print $3}' $verf`
 REVISION_VER=`awk '{if (/REVISION_VER/) print $3}' $verf`
 AGE_VER=`awk '{if (/AGE_VER/) print $3}' $verf`

@@ -1,3 +1,11 @@
+0.2.6:
+---------------------
+1. Remove the "-release" flag from libtool, such that the naming convention
+   of libtabe/libbims is changed to be: libtabe.so.X.X.X/libbims.so.X.X.X.
+   Add release number information into utilities.
+   Thansk to Roger So <roger.so@sw-linux.com>.
+
+
 0.2.5: 2001/12/02
 ---------------------
 1. Fix bug in bims.c: et26: t+space.

@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tsiadd.c,v 1.3 2001/11/11 12:33:08 thhsieh Exp $
+ * $Id: tsiadd.c,v 1.4 2001/12/04 15:05:19 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -19,12 +19,14 @@
 
 #include <db.h>
 #include <tabe.h>
+#include "../src/version.h"
 
 #define BUF_SIZE 4096
 
 void
 usage(void)
 {
+  printf("tsiadd: libtabe-%s\n", RELEASE_VER);
   printf("Usage: tsiadd -d <TsiDB> [-f input file -r -y]\n");
   printf("   -d <TsiDB>     \t path to TsiDB\n");
   printf("   -f <input file>\t input file in plain text (default: stdin)\n");

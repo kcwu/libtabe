@@ -2,7 +2,7 @@
 # Copyright 1999, TaBE Project, All Rights Reserved.
 # Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
 #
-# $Id: Makefile.in,v 1.6 2001/09/20 00:30:24 thhsieh Exp $
+# $Id: Makefile.in,v 1.7 2001/12/04 15:05:16 thhsieh Exp $
 #
 CC              = @CC@
 CFLAGS          = @CFLAGS@
@@ -45,8 +45,7 @@ all: $(LIBNAME)
 
 $(LIBNAME): $(LIBOBJS)
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(LIBOBJS) -rpath $(libdir) \
-		-version-info $(CURRENT_VER):$(REVISION_VER):$(AGE_VER) \
-		-release $(RELEASE_VER)
+		-version-info $(CURRENT_VER):$(REVISION_VER):$(AGE_VER)
 
 bims.lo: bims.c bims.h
 	$(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS) $(DEFS) $(INC) -o $@ bims.c

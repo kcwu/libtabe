@@ -3,21 +3,27 @@
  *
  * Contributed by Kuang-che Wu <kcwu@ck.tp.edu.tw>
  *
- * $Id: tsiyincheck.c,v 1.4 2001/12/02 14:42:55 thhsieh Exp $
+ * $Id: tsiyincheck.c,v 1.5 2001/12/04 15:05:20 thhsieh Exp $
  */
+#ifdef HAVE_CONFIG_H
+#include "../config.h"
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <tabe.h>
+#include "../src/version.h"
 
 void usage(void)
 {
   printf(
+      "tsiyincheck: libtabe-%s\n"
       "Usage: tsiyincheck -d <TsiDB> -y <YinDB> [-f output file]\n"
       "   -d <TsiDB>      \t path to TsiDB\n"
       "   -y <YinDB>      \t path to YinDB\n"
-      "   -f <output file>\t output file (default: stdout)\n"
+      "   -f <output file>\t output file (default: stdout)\n", RELEASE_VER
       );
   exit(0);
 }
