@@ -1,7 +1,7 @@
 /*
  * Copyright 2001, TaBE Project, All Rights Reserved.
  * 
- * $Id: tsiguess.c,v 1.5 2003/05/06 14:07:08 kcwu Exp $  
+ * $Id: tsiguess.c,v 1.6 2003/05/07 14:14:13 kcwu Exp $  
  * 
  */
 #include <stdio.h>
@@ -31,6 +31,7 @@
                                                                                 
 #define IS_BIG5_JP(hex) ( ( (hex) >=0xC6E7 && (hex) <=0xC7F2 ) ? 1 : 0 )
 
+int verbose;
 
 void
 usage(void)
@@ -39,6 +40,7 @@ usage(void)
 	printf("Usage: tsiguess -d <TsiDB> \n");
 	printf("   -d <TsiDB>     \t path to TsiDB\n");
 	printf("   -u <TsiDB>     \t path to user's TsiDB\n");
+	printf("   -v             \t verbose\n");
 	exit(0);
 }
 
@@ -132,7 +134,7 @@ tabeChunkInfoGet(FILE *stream)
 
                 if ( IS_BIG5HI(*p) ) {
 			*(p+1)=fgetc(stream);
-			hex = (*p) * 256 + *(p+1) ;
+			hex = BIG5_TO_HEX(*p,*(p+1));
 			if ( !IS_BIG5LO(*(p+1)) )
 				continue;
 			else if ( IS_BIG5_SPACE(hex) ) {
@@ -205,17 +207,17 @@ tabe_guess_newtsi (struct ChunkInfo *chunk,
 	int i=0;
 	unsigned char  *tsi_str;
 	struct TsiInfo *tsi;		
-        char buf[1024]="";
+        char buf[1024];
 	int buflen=0;
 	
 	if (newdb == NULL)
 		return 0;
-	//return_str[0] = '\0';
+	return_str[0] = '\0';
 
         for (i=0; i < chunk->num_tsi ; i++) {
 		int tsilen;
 		tsi_str = (chunk->tsi+i)->tsi ;
-		tsilen=strlen(tsi_str);
+		tsilen = strlen(tsi_str);
                 if ( tsilen == 2 && isprep(tsi_str) == FALSE ) {
 			strcpy(buf+buflen,tsi_str);
 			buflen+=tsilen;
@@ -224,8 +226,10 @@ tabe_guess_newtsi (struct ChunkInfo *chunk,
 
 		else {		          /* 不是單字詞, 開始整理 buf */
 			if ( buflen >= 4 ) {  
-				//strcat(return_str, buf); /*得到連續單字詞*/
-				//strcat(return_str, " ");
+				if( verbose ) {
+					strcat(return_str, buf); /*得到連續單字詞*/
+					strcat(return_str, " ");
+				}
 
 				tsi=tabeTsiInfoNew(buf);
 				newdb->Get(newdb,tsi);
@@ -240,8 +244,10 @@ tabe_guess_newtsi (struct ChunkInfo *chunk,
 	}
 
 	if ( buflen >= 4 ) { /* at the end of chunk, check again */
-		//strcat(return_str, buf);
-		//strcat(return_str, " ");
+		if( verbose ) {
+			strcat(return_str, buf);
+			strcat(return_str, " ");
+		}
 		
 		tsi=tabeTsiInfoNew(buf);
 		newdb->Get(newdb,tsi);
@@ -267,7 +273,7 @@ main(int argc, char **argv)
 	struct ChunkInfo *chunk = NULL; 
 	unsigned char    *str;
 
-	while ((ch = getopt(argc, argv, "d:u:")) != -1) {
+	while ((ch = getopt(argc, argv, "d:u:v")) != -1) {
     		switch(ch) {
       			case 'd':
         			tsidb_name = (char *)strdup(optarg);
@@ -275,6 +281,9 @@ main(int argc, char **argv)
       			case 'u':
         			usrdb_name = (char *)strdup(optarg);
         			break;
+			case 'v':
+				verbose++;
+				break;
 			default:
 				usage();
 				break;
@@ -288,7 +297,7 @@ main(int argc, char **argv)
     		usage();
 	}
 	
-	tsidb = tabeTsiDBOpen(DB_TYPE_DB, tsidb_name, 
+	tsidb = tabeTsiDBOpen(DB_TYPE_DB, tsidb_name,
 	    DB_FLAG_READONLY|DB_FLAG_NOUNPACK_YIN);
 	if (!tsidb) {
   		usage();
@@ -304,16 +313,15 @@ main(int argc, char **argv)
 	while ( !feof(stdin) ) {
         	if ( (chunk = tabeChunkInfoGet(stdin)) != NULL ) { 
 			tabeChunkSegmentationComplex(tsidb,chunk);
-			//tabeChunkInfoShow(chunk);
+			if (verbose)
+				tabeChunkInfoShow(chunk);
 			if (newdb)
 				tabe_guess_newtsi(chunk, str, newdb);
 			
-			/*
-			if ( strlen(str) > 0 ) {
+			if ( verbose && strlen(str) > 0 ) {
 				printf( "<<新詞: %s>>", str); 
 				str[0] = '\0';
 			}
-			*/
 			tabeChunkInfoDestroy(chunk);
 		}
 	}
