@@ -219,7 +219,8 @@ if(errno) return errno;
   return 0;
 }
 ],
-	[ AC_MSG_RESULT([ok]) ],
+	[ AC_MSG_RESULT([ok]) 
+	  rm -f foo.db ],
 	[ AC_MSG_RESULT([BerkeleyDB header and library mismatch, or API changes.])
 	  exit 1 ])
 
