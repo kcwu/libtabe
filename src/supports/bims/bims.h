@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: bims.h,v 1.1 2000/12/09 09:14:17 thhsieh Exp $
+ * $Id: bims.h,v 1.2 2000/12/10 09:32:36 thhsieh Exp $
  *
  */
 #ifndef __BIMS_H__
@@ -78,6 +78,8 @@ struct bimsContext {
   unsigned char       *internal_text;  /* text: internal text           */
   ZhiCode             *pindown;        /* flag: indicating that the Zhi
 				                is pinned down          */
+  int                 *tsiboundary;    /* flag: indicating the Tsi
+						boundary		*/
   int                  state;          /* editing or zhi selection mode */
   unsigned long int    bcid;           /* bimsContext Identifier        */
   int                  keymap;         /* the type of keymap it uses    */

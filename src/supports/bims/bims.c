@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: bims.c,v 1.1 2000/12/09 09:14:17 thhsieh Exp $
+ * $Id: bims.c,v 1.2 2000/12/10 09:32:36 thhsieh Exp $
  */
 #ifdef HAVE_CONFIG_H
 #include "../../../config.h"
@@ -198,6 +198,10 @@ bimsFreeBC(unsigned long int bcid)
 	free(fbc->pindown);
       }
       fbc->pindown = (ZhiCode *)NULL;
+      if (fbc->tsiboundary) {
+	free(fbc->tsiboundary);
+      }
+      fbc->tsiboundary = (int*)NULL;
       fbc->state = BC_STATE_EDITING;
       fbc->bcid = 0;
       memset(&(fbc->zc), 0, sizeof(fbc->zc));
@@ -439,12 +443,13 @@ bimsContextDP(struct bimsContext *bc)
   struct YinSegInfo *ysinfo = (struct YinSegInfo *)NULL;
   int num_ysinfo = 0;
   struct smart_com *comb = (struct smart_com *)NULL;
-  int i, j, k, rval;
+  int i, j, k, z, rval;
   int yinhead, len, ncomb = 0;
   int ncand, *cand;
   int *tmpcand, tmpncand;
   struct TsiYinInfo ty;
   struct TsiInfo tsi;
+  int maxcount;
   int max_int, index;
   double max_double;
 #define TMP_BUFFER 80 /* this should be far enough for this implementaion */
@@ -483,15 +488,17 @@ bimsContextDP(struct bimsContext *bc)
       ysinfo[num_ysinfo].yindata = (Yin *)malloc(sizeof(Yin)*2);
       memcpy(ysinfo[num_ysinfo].yindata, bc->yin+yinhead, sizeof(Yin)*2);
       num_ysinfo++;
-      /* done duplicate a two-character word */
-      memset(&ty, 0, sizeof(ty));
-      ty.yinlen = 2;
-      ty.yin = ysinfo[num_ysinfo-1].yindata;
-      rval = ydb->Get(ydb, &ty);
-      if (!rval) {
-	/* tsiyin exists, verify if it has pindown character */
- 	if (!bimsVerifyPindown(bc, &ty, yinhead, -1)) {
-	  break;
+      if(!bc->tsiboundary[yinhead+1]) {
+	/* done duplicate a two-character word */
+	memset(&ty, 0, sizeof(ty));
+	ty.yinlen = 2;
+	ty.yin = ysinfo[num_ysinfo-1].yindata;
+	rval = ydb->Get(ydb, &ty);
+	if (!rval) {
+	  /* tsiyin exists, verify if it has pindown character */
+ 	  if (!bimsVerifyPindown(bc, &ty, yinhead, -1)) {
+	    break;
+	  }
 	}
       }
       /* no such tsiyin, handle word by word */
@@ -506,6 +513,14 @@ bimsContextDP(struct bimsContext *bc)
       break;
     }
     for (i = len-yinhead; i > 0; i--) {
+      for (z = 1; z < i; z++) {
+        if (bc->tsiboundary[yinhead+z]) {
+          break;
+        }
+      }
+      if (z != i) {
+        continue;
+      }
       memset(&ty, 0, sizeof(ty));
       ty.yinlen = i;
       memcpy(yin, bc->yin+yinhead, sizeof(Yin)*i);
@@ -519,6 +534,14 @@ bimsContextDP(struct bimsContext *bc)
       }
       for (j = len-yinhead-i; j >= 0; j--) {
 	if (j > 0) {
+          for(z = 1; z < j; z++) {
+            if(bc->tsiboundary[yinhead+i+z]) {
+              break;
+            }
+          }
+          if(z != j) {
+            continue;
+          }
 	  memset(&ty, 0, sizeof(ty));
 	  ty.yinlen = j;
 	  memcpy(yin, bc->yin+yinhead+i, sizeof(Yin)*j);
@@ -532,7 +555,18 @@ bimsContextDP(struct bimsContext *bc)
 	  }
 	}
 	for (k = len-yinhead-i-j; k >= 0; k--) {
+	  if (k > 0 && j == 0) {
+	    continue;
+	  }
 	  if (k > 0) {
+            for(z = 1; z < k; z++) {
+              if(bc->tsiboundary[yinhead+i+j+z]) {
+                break;
+              }
+            }
+	    if(z != k) {
+	      continue;
+	    }
 	    memset(&ty, 0, sizeof(ty));
 	    ty.yinlen = k;
 	    memcpy(yin, bc->yin+yinhead+i+j, sizeof(Yin)*k);
@@ -544,9 +578,6 @@ bimsContextDP(struct bimsContext *bc)
 	    if (bimsVerifyPindown(bc, &ty, yinhead+i+j, -1)) {
 	      continue;
 	    }
-	  }
-	  if (k > 0 && j == 0) {
-	    continue;
 	  }
 	  comb = (struct smart_com *)
 	    realloc(comb, sizeof(struct smart_com)*(ncomb+1));
@@ -565,17 +596,21 @@ bimsContextDP(struct bimsContext *bc)
     /* rule 1: largest sum of three-tsi */
     max_int = 0;
     index = 0;
+    maxcount = 0;
     for (i = 0; i < ncomb; i++) {
       if (comb[i].len > max_int) {
 	index = i;
 	max_int = comb[i].len;
+	maxcount = 1;
+      }
+      else if (comb[i].len == max_int) {
+        maxcount++;
       }
     }
     ncand = 0;
-    cand = (int *)NULL;
+    cand = (int *)malloc(sizeof(int)*maxcount);
     for (i = 0; i < ncomb; i++) {
       if (comb[i].len == max_int) {
-	cand = (int *)realloc(cand, sizeof(int)*(ncand+1));
 	cand[ncand] = i;
 	ncand++;
       }
@@ -588,6 +623,7 @@ bimsContextDP(struct bimsContext *bc)
     else { /* ambiguity */
       /* rule 2: largest average word length */
       max_double = 0;
+      maxcount = 0;
       for (i = 0; i < ncand; i++) {
 	index = cand[i];
 	comb[index].avg_word_len = 0;
@@ -611,15 +647,18 @@ bimsContextDP(struct bimsContext *bc)
 	comb[index].avg_word_len /= j;
 	if (comb[index].avg_word_len > max_double) {
 	  max_double = comb[index].avg_word_len;
+	  maxcount = 1;
+	}
+	else if (comb[index].avg_word_len == max_double) {
+	  maxcount++;
 	}
       }
 
       tmpncand = 0;
-      tmpcand = (int *)NULL;
+      tmpcand = (int *)malloc(sizeof(int)*maxcount);
       for (i = 0; i < ncand; i++) {
 	index = cand[i];
 	if (comb[index].avg_word_len == max_double) {
-	  tmpcand = (int *)realloc(tmpcand, sizeof(int)*(tmpncand+1));
 	  tmpcand[tmpncand] = index;
 	  tmpncand++;
 	}
@@ -637,6 +676,7 @@ bimsContextDP(struct bimsContext *bc)
       else { /* ambiguity */
 	/* rule 3: smallest variance of word length */
 	max_double = 1000; /* this is misleading */
+	maxcount = 0;
 	for (i = 0; i < ncand; i++) {
 	  index = cand[i];
 	  comb[index].smallest_var = 0;
@@ -654,15 +694,18 @@ bimsContextDP(struct bimsContext *bc)
 	  comb[index].smallest_var /= 3;
 	  if (comb[index].smallest_var < max_double) {
 	    max_double = comb[index].smallest_var;
+	    maxcount = 1;
+	  }
+	  else if (comb[index].smallest_var == max_double) {
+	    maxcount++;
 	  }
 	}
 	
 	tmpncand = 0;
-	tmpcand = (int *)NULL;
+	tmpcand = (int *)malloc(sizeof(int)*maxcount);
 	for (i = 0; i < ncand; i++) {
 	  index = cand[i];
 	  if (comb[index].smallest_var == max_double) {
-	    tmpcand = (int *)realloc(tmpcand, sizeof(int)*(tmpncand+1));
 	    tmpcand[tmpncand] = index;
 	    tmpncand++;
 	  }
@@ -681,6 +724,7 @@ bimsContextDP(struct bimsContext *bc)
 	  int max_ref;
 	  /* rule 4: largest sum of tsi ref count */
 	  max_double = 0;
+	  maxcount = 0;
 	  for (i = 0; i < ncand; i++) {
 	    index = cand[i];
 	    comb[index].largest_sum = 0;
@@ -750,15 +794,18 @@ bimsContextDP(struct bimsContext *bc)
 
 	    if (comb[index].largest_sum > max_double) {
 	      max_double = comb[index].largest_sum;
+	      maxcount = 1;
+	    }
+	    else if (comb[index].largest_sum == max_double) {
+	      maxcount++;
 	    }
 	  }
 	  
 	  tmpncand = 0;
-	  tmpcand = (int *)NULL;
+	  tmpcand = (int *)malloc(sizeof(int)*maxcount);
 	  for (i = 0; i < ncand; i++) {
 	    index = cand[i];
 	    if (comb[index].largest_sum == max_double) {
-	      tmpcand = (int *)realloc(tmpcand, sizeof(int)*(tmpncand+1));
 	      tmpcand[tmpncand] = index;
 	      tmpncand++;
 	    }
@@ -926,6 +973,7 @@ bimsContextSmartEdit(struct bimsContext *bc)
  * XK_Right     move the internal cursor one zhi right
  * XK_Backspace
  * XK_Delete    delete the zhi in front of the internal cursor
+ * XK_Tab       switch the tsi boundary
  * XK_Return    does nothing so far, client may request for string
  * others       depends on the key mapping the client uses
  *
@@ -999,13 +1047,15 @@ bimsFeedKey(unsigned long int bcid, KeySym key)
 
 	  memmove(bc->yin+(bc->yinpos-1), bc->yin+(bc->yinpos),
 		  sizeof(Yin)*(bc->yinlen-(bc->yinpos-1)));
-/*		  sizeof(Yin)*(bc->yinlen-(bc->yinpos-1)+1)); */
 	  memmove(bc->internal_text+(bc->yinpos-1)*2,
 		  bc->internal_text+(bc->yinpos)*2,
 		  sizeof(unsigned char)*2*(bc->yinlen-(bc->yinpos-1)));
 	  memmove(bc->pindown+(bc->yinpos-1),
 		  bc->pindown+(bc->yinpos),
 		  sizeof(ZhiCode)*(bc->yinlen-(bc->yinpos-1)));
+	  memmove(bc->tsiboundary+(bc->yinpos-1),
+	  	  bc->tsiboundary+(bc->yinpos),
+	  	  sizeof(int)*(bc->yinlen-(bc->yinpos-1)));
 	}
 	else { /* the last character */
 	  bc->internal_text[(bc->yinlen-1)*2] = (unsigned char)NULL;
@@ -1015,6 +1065,14 @@ bimsFeedKey(unsigned long int bcid, KeySym key)
         bimsContextSmartEdit(bc);
         return(BC_VAL_ABSORB);
       }
+    }
+    return(BC_VAL_IGNORE);
+  case XK_Tab:
+    if(strlen((char *)bc->zc.string) == 0 && bc->yinlen >0 &&
+       bc->yinlen!=bc->yinpos) {
+      bc->tsiboundary[bc->yinpos] = (! bc->tsiboundary[bc->yinpos]);
+      bimsContextSmartEdit(bc);
+      return(BC_VAL_ABSORB);
     }
     return(BC_VAL_IGNORE);
   case XK_Return:
@@ -1091,6 +1149,11 @@ bimsFeedKey(unsigned long int bcid, KeySym key)
       memmove(bc->pindown+(bc->yinpos+1), bc->pindown+(bc->yinpos),
 	      sizeof(ZhiCode)*(bc->yinlen-bc->yinpos));
       bc->pindown[bc->yinpos] = 0;
+      bc->tsiboundary = (int *)realloc(bc->tsiboundary,
+				       sizeof(int)*(bc->yinlen+1));
+      memmove(bc->tsiboundary+(bc->yinpos+1), bc->tsiboundary+(bc->yinpos),
+	      sizeof(int)*(bc->yinlen-bc->yinpos));
+      bc->tsiboundary[bc->yinpos] = 0;
       bc->yinlen++;
       bc->yinpos++;
       bimsZuYinContextClear(&(bc->zc));
@@ -1311,9 +1374,14 @@ bimsPindownByNumber(unsigned long int bcid, int sel)
   for (;*str;) {
     bc->pindown[i] =
       (*str)*256 + *(str+1);
+    bc->tsiboundary[i] = 0;
     i++;
     str += 2;
   }
+  if (i != bc->yinlen)
+    bc->tsiboundary[i] = 1;
+  if (bc->yinpos != 0)
+    bc->tsiboundary[bc->yinpos] = 1;
   bimsContextSmartEdit(bc);
 
   return(0);
@@ -1369,6 +1437,8 @@ bimsFetchText(unsigned long int bcid, int len)
   memmove(bc->internal_text, bc->internal_text+newlen*2,
 	  sizeof(unsigned char)*((bc->yinlen-newlen)*2+1));
   memmove(bc->pindown, bc->pindown+len, sizeof(ZhiCode)*(bc->yinlen-newlen));
+  memmove(bc->tsiboundary, bc->tsiboundary+len,
+	  sizeof(int)*(bc->yinlen-newlen));
   bc->yinlen -= newlen;
 
   bimsContextSmartEdit(bc);
