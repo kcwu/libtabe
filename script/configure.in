@@ -1,0 +1,238 @@
+dnl configure.in for libtabe
+dnl
+dnl Process this file with autoconf to produce a configure script.
+dnl-----------------------------------------------------------------------
+AC_INIT(src/tabe.h)
+AC_CONFIG_AUX_DIR(script)
+AC_CONFIG_HEADER(config.h:script/config.h.in)
+AC_CANONICAL_HOST
+
+dnl-----------------------------------------------------------------------
+dnl libtabe configure special command line options
+dnl-----------------------------------------------------------------------
+AC_ARG_ENABLE(debug,
+    [  --enable-debug          enable debug],
+    [if test x$enableval = xyes; then
+         AC_DEFINE(DEBUG) enable_debug=yes
+     fi])
+
+AC_ARG_ENABLE(shared,
+    [  --enable-shared         also make the shared libraries.],
+    [if test x$enableval = xyes; then
+	 enable_shared=yes
+     fi])
+
+AC_ARG_ENABLE(merge-db,
+    [  --enable-merge-db       merge the original db files with the new version.],
+    [if test x$enableval = xyes; then
+         enable_mergedb=yes
+     fi])
+
+AC_ARG_WITH(dbinc,
+    [  --with-dbinc=PATH       set the include dir of Berkeley DB2.],
+    [if test x$withval != x; then
+         db_include="$withval"
+     fi])
+
+AC_ARG_WITH(dblib,
+    [  --with-dblib=PATH       set the library dir of Berkeley DB2.],
+    [if test x$withval != x; then
+         db_library="$withval"
+     fi])
+
+if test "$program_prefix" != NONE; then
+    program_prefix="$program_prefix/"
+else
+    program_prefix=
+fi
+if test "$enable_mergedb" = yes; then
+    enable_mergedb='mergedb'
+else
+    enable_mergedb=
+fi
+AC_SUBST(program_prefix)
+AC_SUBST(enable_mergedb)
+
+dnl-----------------------------------------------------------------------
+dnl Check compiler: You can specify in 'CC=<..> ./configure'
+dnl-----------------------------------------------------------------------
+OLD_CFLAGS=$CFLAGS
+AC_PROG_CC
+if test "x$GCC" != xyes; then
+    compiler_type=
+
+    AC_MSG_RESULT([checking for ANSI C compiler ....])
+    CFLAGS="$OLD_CFLAGS -Aa"
+    AC_TRY_RUN([ int main(){return 0;} ], [ compiler_type=ANSIC ])
+fi
+CFLAGS=$OLD_CFLAGS
+
+dnl-----------------------------------------------------------------------
+dnl Supply default CFLAGS, if not specified by `CFLAGS=flags ./configure'
+dnl-----------------------------------------------------------------------
+if test -z "$CFLAGS"; then
+    if test "x$GCC" = xyes; then
+	optimize_opt=-O2
+	CFLAGS='-Wall -fsigned-char'
+    else
+	optimize_opt=-O
+	if test "x$compiler_type" = xANSIC; then
+	    CFLAGS=-Aa
+	else
+	    CFLAGS=
+	fi
+    fi
+
+    if test "x$enable_debug" = xyes; then
+        CFLAGS="$CFLAGS -g"
+    else
+	CFLAGS="$CFLAGS $optimize_opt"
+    fi
+fi
+
+dnl-----------------------------------------------------------------------
+dnl Checks for programs.
+dnl-----------------------------------------------------------------------
+AC_PROG_CPP
+AC_PROG_LN_S
+AC_PROG_MAKE_SET
+AC_PROG_RANLIB
+AC_PROG_INSTALL
+
+${INSTALL} -d testdir > /dev/null 2>&1
+if test ! -d testdir; then
+    INSTALL="$srcdir/script/install-sh -c"
+    AC_SUBST(INSTALL)
+fi
+rm -rf testdir
+AC_MSG_RESULT([checking for install -d: $INSTALL])
+
+
+dnl-----------------------------------------------------------------------
+dnl Checks for Host type & Dynamic library & options.
+dnl-----------------------------------------------------------------------
+case "$host_os" in
+    linux*)  
+	cf_sharelib='-fPIC'
+	ld_sharelib='gcc -shared -Wl,-soname,$(so_ver)'
+	ld_shareexe=''
+	slib_ext='so'
+	env_libpath='LD_LIBRARY_PATH'
+	AC_DEFINE(LINUX)
+        ;;
+    freebsd*)
+	cf_sharelib='-fPIC'
+        ld_sharelib='gcc -shared -Wl,-R,$(so_ver)'
+	ld_shareexe=''
+	slib_ext='so'
+	env_libpath='LD_LIBRARY_PATH'
+	AC_DEFINE(FREEBSD)
+        ;;
+    openbsd*)
+	cf_sharelib='-fPIC'
+        ld_sharelib='ld -x -Bforcearchive -Bshareable'
+	ld_shareexe=''
+	slib_ext='so'
+	env_libpath='LD_LIBRARY_PATH'
+	AC_DEFINE(OPENBSD)
+        ;;
+    netbsd*)
+	cf_sharelib='-fPIC'
+	ld_sharelib='ld -x -Bforcearchive -Bshareable'
+	ld_shareexe=''
+	slib_ext='so'
+	env_libpath='LD_LIBRARY_PATH'
+	AC_DEFINE(NETBSD)
+	;;
+    solaris*)
+	cf_sharelib='-fPIC'
+	ld_sharelib='gcc -shared -Wl,-R,$(so_ver)'
+	ld_shareexe=''
+	slib_ext='so'
+	env_libpath='LD_LIBRARY_PATH'
+	AC_DEFINE(SOLARIS)
+	;;
+    hp*)
+	cf_sharelib='-n +Z'
+	ld_sharelib='ld -b +h $(so_ver)'
+	ld_shareexe='-Wl,+s'
+	slib_ext='sl'
+	env_libpath='SHLIB_PATH'
+	AC_DEFINE(HPUX)
+	;;
+esac
+if test "$enable_shared" = yes; then
+    AC_SUBST(cf_sharelib)
+    AC_SUBST(ld_sharelib)
+    AC_SUBST(ld_shareexe)
+    AC_SUBST(slib_ext)
+    AC_SUBST(env_libpath)
+    make_all='unshared shared'
+else
+    make_all='unshared'
+fi
+AC_SUBST(make_all)
+
+
+dnl-----------------------------------------------------------------------
+dnl Checks for Berkeley DB2 libraries.
+dnl-----------------------------------------------------------------------
+if test ! x$db_include = x; then
+    db_include="-I$db_include"
+fi
+if test ! x$db_library = x; then
+    db_library="-L$db_library"
+fi
+
+mytarget='db'
+LDFLAGS="$LDFLAGS $db_library"
+AC_CHECK_LIB($mytarget, db_open, , [ mytarget=db2 ])
+if test $mytarget != db; then
+    AC_CHECK_LIB($mytarget, db_open, ,
+        [ AC_MSG_RESULT([You need Berkeley DB 2 to compile xcin.])
+          AC_MSG_RESULT([Please use --with-dbinc and --with-dblib to configure.])
+          exit 1])
+fi
+db_library="$db_library -l$mytarget"
+AC_SUBST(db_include)
+AC_SUBST(db_library)
+
+dnl-----------------------------------------------------------------------
+dnl Checks for X11R6 library
+dnl-----------------------------------------------------------------------
+AC_PATH_X
+if test ! x$x_libraries = x; then
+    LDFLAGS="$LDFLAGS -L$x_libraries"
+fi
+AC_CHECK_LIB(X11, XOpenDisplay, ,
+    [ AC_MSG_RESULT([You need X11R6 to compile xcin.])
+      AC_MSG_RESULT([Please use --x-includes and --x-libraries to configure.])
+      exit 1 ])
+
+AC_SUBST(x_includes)
+AC_SUBST(x_libraries)
+LDFLAGS="$LDFLAGS -L$x_libraries"
+
+dnl-----------------------------------------------------------------------
+dnl Checks for header files.
+dnl-----------------------------------------------------------------------
+AC_HEADER_STDC
+AC_CHECK_HEADERS(unistd.h)
+
+dnl-----------------------------------------------------------------------
+dnl Checks for typedefs, structures, and compiler characteristics.
+dnl-----------------------------------------------------------------------
+AC_C_CONST
+
+dnl-----------------------------------------------------------------------
+dnl Checks for library functions.
+dnl-----------------------------------------------------------------------
+AC_FUNC_MEMCMP
+AC_CHECK_FUNCS(strdup strerror strstr)
+
+AC_OUTPUT(Makefile:script/Makefile.in \
+	  src/Makefile \
+	  src/supports/bims/Makefile \
+	  src/util/Makefile \
+	  src/tsi-src/Makefile)
+

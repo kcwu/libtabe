@@ -1,0 +1,112 @@
+
+o Introduction:
+
+  bims is designed and implemented as an analogy of Going input kernel
+  of Window platform.
+
+  The kernel could be used in various applications, not limited to
+  Phonetic input method. However, because of the limited accuracy it
+  can achieve so far, no other applications are under consideration.
+
+  It makes use of libtabe, and is independent of user-interface. In
+  the directory examples/GTK, you can find a file `gtk_entryglue.c',
+  which glue the input method logic directly to GTK Entry widget.
+
+  It is also being used by Xcin as it's default Phonetic input method.
+
+o Supported Key Maps:
+
+  Four Key Maps are currently supported.
+
+  1. Zozy Key Map
+  2. Eten Key Map
+  3. Hsu Key Map
+  4. ET26 Key Map
+
+  The implement of Hsu Key Map and ET26 Key Map may be wrong, though.
+
+o Kernel Interface
+
+  .bimsInit()
+  .bimsDestroy()
+
+	Initialize and Destroy the bims kernel.
+
+  .bimsGetBC()
+  .bimsFreeBC()
+
+	Retrieve the BC (client handler) from the kernel
+
+  .bimsFeedKey()
+
+	Feed key to the bims client.
+
+  .bimsToggleZhiSelection()
+  .bimsToggleTsiSelection()
+
+	Toggle into selection mode.
+
+  .bimsToggleEditing()
+
+	Toggle into editing mode.
+
+  .bimsPindown()
+
+	Pindown a character.
+
+  .bimsPindownByNumber()
+
+	Pindown a character or multiple characters by the selection number.
+
+  .bimsSetSelectionBase()
+
+	Set the selection mode base character.
+
+  .bimsSetMaxLen()
+
+	Set maximum length of client internal buffer.
+
+  .bimsFetchText()
+
+	Fetch text from the client internal buffer.
+
+  .bimsSetKeyMap()
+
+	Set Key Map for the client.
+
+  .bimsQueryState()
+
+	Query the state of client.
+
+  .bimsQueryPos()
+
+	Query the current cursor position of client.
+
+  .bimsQueryYinSeg()
+
+	Query the Yin segmentation of current text.
+
+  .bimsQueryInternalText()
+
+	Query the current client internal buffer.
+
+  .bimsQueryZuYinString()
+
+	Query the zuyin string.
+
+  .bimsQueryLastZuYinString()
+
+	Query the last zuyin string.
+
+  .bimsQuerySelectionNumber()
+
+	Query the number of selection available in client.
+
+  .bimsQuerySelectionText()
+
+	Query the selection text.
+
+  .bimsQuerySelectionBase()
+
+	Query the base character of selection.
+

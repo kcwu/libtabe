@@ -1,0 +1,13 @@
+
+Wish list for release 0.2:
+
+ 1. plain text database
+
+    this eases the use of customized tsi or tsiyin databases
+
+ 2. multiple databases for a bims instance
+    (for example, one for system-wide reference, one customized for user)
+
+ 3. speech software?
+    (http://www.cstr.ed.ac.uk/projects/festival.html may be a candidate)
+

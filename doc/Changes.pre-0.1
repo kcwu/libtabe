@@ -1,0 +1,88 @@
+0.1-pre9:  2000/01/24
+---------------------
+1. Add Eten 26 key map in bims.c.
+
+
+0.1-pre8:  1999/12/15
+---------------------
+1. Bug fix for incorrect DB file generation.
+   Thanks to report by <yuchia@bbs.ee.ntu.edu.tw>
+
+2. Move the ZuYin code list to the end of table _ZhiYinTable[] in 
+   tabe_zhi2yin.h.
+
+3. Modify tabeZhiCodeToPackedBig5Code() in tabe_util.c to include
+   ZuYin code indices.
+
+4. Rearrange the Zhi sequence in the same Yin according to the order of
+   ETen system.
+
+5. Add reference counts of ZuYin codes in tabe_charref.h. They are all
+   set to be 1.
+
+
+0.1-pre7:  1999/11/28
+---------------------
+1. Change the Makefile of src/tsi-src such that when installing the DB
+   files, it will merge the original DB file in the installation path.
+   Thanks to Jian-Da Li <jdli@freebsd.csie.nctu.edu.tw>.
+
+2. Add a patch to support multi-phrase selection.
+   Thanks to joe <joe@os.nctu.edu.tw>
+
+3. Add the ZuiYin code into tabe_yin2z.h and tabe_zhi2yin.h.
+   Add the ZuiYin code into tsi.src data file.
+
+4. Small modification of tabeTsiInfoLookupPossibleTsiYin() message output.
+
+5. Modify the bims.c to have:
+	bimsToggleZhiSelection() & bimsToggleTsiSelection().
+
+6. Add configure option --program-prefix.
+   Thanks to Andrew Lee <Andrew@nssh.tpc.edu.tw>
+
+
+0.1-pre6:  1999/11/09
+---------------------
+1. Change the default CFLAGS to "-Wall -fsigned-char -O2"
+
+2. Add a simple function to avoid open huge DB file when operation.
+   int bimsToggleNoSmartEditing(void)
+
+3. Add a new function to query the last ZuYin code of the yin list.
+   unsigned char *bimsQueryLastZuYinString(unsigned long int bcid)
+
+
+0.1-pre5:  1999/10/27
+---------------------
+1. Add a patch from <joe@wiley.os.nctu.edu.tw>
+   a. Fix the problem of:
+      在bimsphone 裡頭打 "依樣" 兩字, 然後移動游標, 按上然後選擇 "樣",
+      此後就沒辦法把 "依" 改成 "一" 了。
+
+   b. Add Home/End cursor moving keys.
+
+   c. Distinguish Backspace & Delete keys.
+   
+2. Add a patch from <joe@wiley.os.nctu.edu.tw>
+   a. Let toggle selection on when the cursor is at the end of the editing text.
+
+   b. In "Hsu" keymap, one can use 'q' key to switch between 3 frequently used 
+      chars.
+
+3. Modify the configure and Makefiles such that they are OK in Solaris system.
+
+
+
+0.1-pre4:  1999/09/12
+---------------------
+1. Fix a bug of the returned value of getopt in tsi-utils.
+   Thanks to Chih-Wei Huang <cwhuang@linux.org.tw>
+
+
+0.1-pre3:  1999/09/10
+---------------------
+1. Fix a small bug of bims for hsu keymap.
+   Thanks to Scott Tsai <scottt@tpts5.seed.net.tw>
+
+2. Add libtabe/doc/Changes.

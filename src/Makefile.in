@@ -1,0 +1,183 @@
+#
+# Copyright 1999, TaBE Project, All Rights Reserved.
+# Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
+#
+# $Id: Makefile.in,v 1.1 2000/12/09 09:14:09 thhsieh Exp $
+#
+CC              = @CC@
+CFLAGS          = @CFLAGS@
+CPPFLAGS        = @CPPFLAGS@
+DEFS            = @DEFS@
+RANLIB          = @RANLIB@
+LN_S            = @LN_S@
+LDFLAGS	        = @db_library@
+INC	        = @db_include@
+INSTALL         = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA    = @INSTALL_DATA@
+cf_sharelib     = @cf_sharelib@
+ld_sharelib     = @ld_sharelib@
+slib_ext	= @slib_ext@
+@SET_MAKE@
+
+program_prefix = @program_prefix@
+srcdir      = @srcdir@
+top_srcdir  = @top_srcdir@
+prefix      = $(program_prefix)@prefix@
+exec_prefix = @exec_prefix@
+libdir	    = @libdir@
+bindir	    = @bindir@
+includedir  = @includedir@
+
+version	    = 0.2.0
+major_ver   = 0.2
+
+#
+# libtabe main makefile.
+#
+AR          =   ar cr
+RM          =   rm -rf
+LIBNAME	    =	tabe
+LIBSRCS	    =	tabe_util.c tabe_zuyin.c tabe_yin.c \
+		tabe_tsi.c tabe_tsidbint.c tabe_tsiyindbint.c \
+                tabe_chu.c
+LIBOBJS	    =	tabe_util.o tabe_zuyin.o tabe_yin.o \
+		tabe_tsi.o tabe_tsidbint.o tabe_tsiyindbint.o \
+                tabe_chu.o
+SHARED_OBJS =	obj-s/tabe_util.o obj-s/tabe_zuyin.o obj-s/tabe_yin.o \
+		obj-s/tabe_tsi.o obj-s/tabe_tsidbint.o \
+		obj-s/tabe_tsiyindbint.o obj-s/tabe_chu.o
+INCLUDES    =	tabe.h
+
+sharelib    =   lib$(LIBNAME).$(slib_ext)
+so_ver	    =   $(sharelib).$(major_ver)
+unsharelib  =   lib$(LIBNAME).a
+
+#TESTPRG    =	testtabe
+#TESTSRC    =	testtabe.c
+#TESTOBJ    =	testtabe.o
+
+#
+# Over all targets.
+#
+all: binary data
+
+# binary: @make_all@ subsys $(TESTPRG)
+binary: @make_all@ subsys
+
+data: binary
+	(cd tsi-src; $(MAKE))
+
+shared: $(sharelib).$(version)
+
+unshared: $(unsharelib)
+
+# $(TESTPRG): $(TESTOBJ) lib$(LIBNAME).a
+# 	$(CC) -o $(TESTPRG) $(TESTOBJ) -L. -l$(LIBNAME) $(LDFLAGS)
+
+$(unsharelib): $(LIBOBJS)
+	$(AR) $(unsharelib) $(LIBOBJS)
+	if [ -n "$(RANLIB)" ]; then $(RANLIB) $(unsharelib); fi
+
+$(sharelib).$(version): OBJSDIR $(SHARED_OBJS)
+	$(ld_sharelib) -o $(sharelib).$(version) $(SHARED_OBJS)
+	$(RM) $(sharelib) $(sharelib).$(major_ver)
+	$(LN_S) $(sharelib).$(version) $(sharelib).$(major_ver)
+	$(LN_S) $(sharelib).$(version) $(sharelib)
+
+subsys:
+	(cd supports/bims; $(MAKE))
+	(cd util; $(MAKE))
+
+#
+# Unshared objects
+#
+tabe_util.o: tabe_util.c tabe.h tabe_charref.h
+	$(CC) -c $(CFLAGS) $(DEFS) $(INC) -o $@ $<
+
+tabe_zuyin.o: tabe_zuyin.c tabe.h
+	$(CC) -c $(CFLAGS) $(DEFS) $(INC) -o $@ $<
+
+tabe_yin.o: tabe_yin.c tabe.h tabe_zhi2yin.h tabe_yin2zhi.h
+	$(CC) -c $(CFLAGS) $(DEFS) $(INC) -o $@ $<
+
+tabe_tsi.o: tabe_tsi.c tabe.h
+	$(CC) -c $(CFLAGS) $(DEFS) $(INC) -o $@ $<
+
+tabe_tsidbint.o: tabe_tsidbint.c tabe.h
+	$(CC) -c $(CFLAGS) $(DEFS) $(INC) -o $@ $<
+
+tabe_tsiyindbint.o: tabe_tsiyindbint.c tabe.h
+	$(CC) -c $(CFLAGS) $(DEFS) $(INC) -o $@ $<
+
+tabe_chu.o: tabe_chu.c tabe.h
+	$(CC) -c $(CFLAGS) $(DEFS) $(INC) -o $@ $<
+
+#
+# Shared objects
+#
+OBJSDIR:
+	if [ ! -d obj-s ]; then mkdir obj-s; fi
+
+obj-s/tabe_util.o: tabe_util.c tabe.h tabe_charref.h
+	$(CC) -c $(cf_sharelib) $(CFLAGS) $(DEFS) $(INC) -o $@ tabe_util.c
+
+obj-s/tabe_zuyin.o: tabe_zuyin.c tabe.h
+	$(CC) -c $(cf_sharelib) $(CFLAGS) $(DEFS) $(INC) -o $@ tabe_zuyin.c
+
+obj-s/tabe_yin.o: tabe_yin.c tabe.h tabe_zhi2yin.h tabe_yin2zhi.h
+	$(CC) -c $(cf_sharelib) $(CFLAGS) $(DEFS) $(INC) -o $@ tabe_yin.c
+
+obj-s/tabe_tsi.o: tabe_tsi.c tabe.h
+	$(CC) -c $(cf_sharelib) $(CFLAGS) $(DEFS) $(INC) -o $@ tabe_tsi.c
+
+obj-s/tabe_tsidbint.o: tabe_tsidbint.c tabe.h
+	$(CC) -c $(cf_sharelib) $(CFLAGS) $(DEFS) $(INC) -o $@ tabe_tsidbint.c
+
+obj-s/tabe_tsiyindbint.o: tabe_tsiyindbint.c tabe.h
+	$(CC) -c $(cf_sharelib) $(CFLAGS) $(DEFS) $(INC) -o $@ tabe_tsiyindbint.c
+
+obj-s/tabe_chu.o: tabe_chu.c tabe.h
+	$(CC) -c $(cf_sharelib) $(CFLAGS) $(DEFS) $(INC) -o $@ tabe_chu.c
+
+#
+# Other targets.
+#
+.PHONY: clean distclean install install_binary install_data
+clean:
+	$(RM) $(unsharelib) $(sharelib)* $(TESTPRG) $(TESTOBJ) \
+		$(LIBOBJS) $(SHARED_OBJS) *~ core
+	(cd supports/bims; $(MAKE) clean)
+	(cd util; $(MAKE) clean)
+	(cd tsi-src; $(MAKE) clean)
+
+distclean:
+	$(RM) $(unsharelib) $(sharelib)* $(TESTPRG) $(TESTOBJ) \
+		$(LIBOBJS) $(SHARED_OBJS) *~
+	$(RM) Makefile
+	if [ -d obj-s ]; then rmdir obj-s; fi
+	(cd supports/bims; $(MAKE) distclean)
+	(cd util; $(MAKE) distclean)
+	(cd tsi-src; $(MAKE) distclean)
+
+install: install_binary install_data
+
+install_binary: binary
+	if [ ! -d $(libdir) ]; then $(INSTALL) -d $(libdir); fi
+	$(INSTALL_DATA) $(unsharelib) $(libdir)
+	if [ -f $(sharelib) ]; then \
+	    $(RM) $(libdir)/$(sharelib)*; \
+	    $(INSTALL_PROGRAM) $(sharelib).$(version) $(libdir); \
+	    (cd $(libdir); \
+	     $(LN_S) $(sharelib).$(version) $(sharelib).$(major_ver); \
+	     $(LN_S) $(sharelib).$(version) $(sharelib)) \
+	fi
+
+	if [ ! -d $(includedir) ]; then $(INSTALL) -d $(includedir); fi
+	$(INSTALL_DATA) $(INCLUDES) $(includedir)
+	(cd supports/bims; $(MAKE) install)
+	(cd util; $(MAKE) install)
+
+install_data: data
+	(cd tsi-src; $(MAKE) install)
+

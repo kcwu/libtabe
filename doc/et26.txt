@@ -1,0 +1,20 @@
+倚天 26 鍵 keymap:
+
+ㄅㄆㄇㄈ  ㄉㄊㄋㄌ
+b p m f   d t n l
+
+ㄍㄎㄏ  ㄐㄑㄒ
+v k h   g v c
+
+ㄓㄔㄕㄖ  ㄗㄘㄙ
+g y c j   q w s 
+
+ㄧㄨㄩ  ㄚㄛㄜㄝ
+e x u   a o r w
+              ^
+ㄞㄟㄠㄡ  ㄢㄣㄤㄥㄦ
+i q z p   m n t l h
+  ^   ^   ^ ^ ^ ^ ^
+一聲    輕聲 二聲 三聲 四聲
+<space> d    f    j    k
+

@@ -1,0 +1,9 @@
+
+style "defaultfontset"
+{
+  fontset = "-*--16-*-big5-0,\
+	     -*--16-*-iso8859-1"
+}
+
+class "GtkWidget" style "defaultfontset"
+

@@ -1,0 +1,31 @@
+You should have Berkeley DB 2 library to install the tabe library.
+The Berkeley DB 2 is available in
+
+	http://www.sleepycat.com
+	ftp://xcin.linux.org.tw/pub/xcin/misc/db-2.7.4.tar.gz
+
+To install, please follow these steps:
+
+1. configure: which can accept the following options 
+   (see "configure --help" for details):
+
+   --prefix=<PATH>	set the installation prefix.
+
+   --x-includes=<PATH>	set the X-Window include path.
+
+   --x-libraries=<PATH>	set the X-Window library path.
+
+   --enable-debug	enable the debug option.
+
+   --enable-shared	also compile the shared libraries.
+
+   --enable-merge-db	merge the original db files with the new version.
+
+   --with-dbinc=<PATH>	set the Berkeley DB 2 include path.
+
+   --with-dblib=<PATH>	set the Berkeley DB 2 library path.
+
+2. make; make install
+
+
+

@@ -1,0 +1,21 @@
+#
+# Copyright 1999, TaBE Project, All Rights Reserved.
+# Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
+#
+# $Id: Imakefile,v 1.1 2000/12/09 09:14:16 thhsieh Exp $
+#
+
+CC   = gcc
+PROG = GTKTsi
+SRCS = GTKTsi.c ../bims/gtkentry_glue.c ../bims/bims.c
+OBJS = GTKTsi.o ../bims/gtkentry_glue.o ../bims/bims.o
+LIBX = -L../../ -ltabe -L/usr/local/BerkeleyDB/lib/ -ldb \
+	`gtk-config --libs` -lpthread
+
+XCOMM Comment it if you have locale supports on your platform
+CCOPTIONS = -Wall `gtk-config --cflags` \
+	-g -I/usr/local/BerkeleyDB/include \
+	-I../../ -I../bims/
+
+AllTarget($(PROG))
+NormalProgramTarget($(PROG),$(OBJS),,,$(LIBX))

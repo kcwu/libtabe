@@ -1,0 +1,102 @@
+<HTML>
+<HEAD>
+<TITLE>BoPoMoFo system and encoding in libtabe</TITLE>
+</HEAD>
+<BODY>
+
+<H2>Table Of Content</H2>
+<OL>
+<LI><A HREF="#intro">Introduction</A>
+<LI><A HREF="#encoding">Encoding System</A>
+<LI><A HREF="#credits">Credits</A>
+</OL>
+
+<HR>
+
+<H2><A NAME="intro">Introduction</A></H2>
+
+<P>
+<I>BoPoMoFo</I>, similar to PinYin or other Romanization system used
+elsewhere, is the most common method for learning Mandarin/Chinese
+pronunciation in Taiwan area.  The system consists of 37 phonetic
+plus 5 tone symbols.  Each basic pronunciation of Chinese is made up
+of at most 3 phonetic symbols and exactly one tone symbol.  Each of
+the 37 phonetic symbol can appear once in a pronunciation, and not all
+the combinations of phonetic symbols are meaningful.  The 37 phonetic
+symbols are exclusively divided into 3 groups, only one symbols out
+of a group can be used to make up pronunciation.  The 3 phonetic
+symbols used to make up a pronunciation come out of the 3 groups, one
+for each group.
+</P>
+
+<H2><A NAME="encoding">Encoding System</A></H2>
+<P>
+Each of the 37 phonetic symbols are assigned number for 1 to 37. The 5
+tone symbols are assigned number from 38 to 42. `0' is used to
+designate there's no symbol in the position.  The word `electricity''s
+pronunciation code thus is (5, 22, 33, 41).
+</P>
+
+<P>
+To help processing of the code, we designed an encoding system that
+uses 15bit, i.e., less than 2 bytes to represent it.  The reason is
+try to maintain all the combinations while be space-efficient.  The
+first group have phonetic symbols has 21 symbols, the second group has
+3, the third group has 13, as shown in Table 1.  So we use 6 bits for
+the first group, 2 bits for the second group and 4 bits for the third
+group, plus 3 bits for the tone symbols.
+</P>
+
+<TABLE BORDER="2" CELLPADDING="5" ALIGN="CENTER">
+<TH></TH>
+<TH>1st Group</TH>
+<TH>2nd Group</TH>
+<TH>3rd Group</TH>
+<TH>Tone Symbols</TH>
+<TR>
+
+<TH># of Symbols</TH>
+<TD>21</TD>
+<TD>3</TD>
+<TD>13</TD>
+<TD>5</TD>
+<TR>
+
+<TH># of Bits</TH>
+<TD>6</TD>
+<TD>2</TD>
+<TD>4</TD>
+<TD>3</TD>
+<TR>
+</TABLE>
+<BR>
+<CENTER>Table 1.  Numbers and Bits of Each BoPoMoFo Group</CENTER>
+
+<P>
+The symbol value stored is the offset in it's group plus 1. (0 is
+reserved)  So the encoding for the example code in the previous
+paragraph is
+<BLOCKQUOTE>
+"0 000101<TT>(5)</TT> 01<TT>(22-21=1)</TT>
+1001<TT>(33-24=9)</TT> 100<TT>(41-37=4)</TT>"
+</BLOCKQUOTE>
+It's 2764 in decimal. All the pronunciation related functions used the
+encoding as internal pronunciation representations and storage format.
+</P>
+
+<H2><A NAME="credits">Credits</A></H2>
+<P>
+The encoding system was inspired by the ETen Chinese System's hashing
+function, and brought to attention by Yung-Ching Hsiao.
+</P>
+
+<HR>
+<CENTER>
+<TINY>
+$Id: BoPoMoFo.shtml,v 1.1 2000/12/09 09:14:09 thhsieh Exp $<BR>
+Copyright 2000, libtabe Project. All rights reserved.
+</TINY>
+</CENTER>
+
+</BODY>
+</HTML>

@@ -1,0 +1,619 @@
+<!doctype linuxdoc system>
+<!-- 作者 蕭百翔 -->
+
+<article>
+
+<!-- Title information -->
+<title>libtabe -- TaBE 函式庫
+
+<author>蕭百翔 <it><htmlurl url="mailto:shawn@iis.sinica.edu.tw"
+                     name="&lt;shawn@iis.sinica.edu.tw&gt;"></it></author>
+<date>$Id: libtabe.sgml,v 1.1 2000/12/09 09:14:09 thhsieh Exp $
+
+<abstract>
+在電腦上處理中文，跟原有的 C 函式庫一直很難順利的整合。
+以 Big5 碼來說，一個字佔了兩個 byte，不管是計算字串長度，
+或者是要考慮中文字的字序，甚至要處理詞或句子的時候，都需要做特別的調整，
+原有的 C 函式庫根本不敷使用。
+另一方面，由於每個程式開發人員在處理中文的時候，都有自己的方法，
+所以不同程式之間很難分享函式庫，更不用提重覆利用了。
+TaBE 計畫希望能夠提供一個更好的中文使用環境，因此，
+就很需要一個能處理中文字、詞、句的統一介面與函式庫，
+來做為所有應用程式的基礎。
+libtabe，就是希望成為這樣的一套函式庫，提供統一的介面與足夠的功能，
+讓應用程式有強大的基礎可以發揮。
+</abstract>
+
+<!-- Table of contents -->
+<toc>
+
+<!-- Begin of document -->
+<sect>介紹
+<p>
+libtabe 將中文的處理分成幾個階段，由小到大分別是：
+<itemize>
+<item>注音符號(ZuYin Symbols)：
+      每一個中文字都由一個或多個的注音符號加上一個聲調符號所組成。
+      注音符號加上聲調符號的總數是四十二個
+      (三十七個注音符號加上五個聲調符號)
+<item>讀音(Yin)：
+      一個讀音是由一個或多個的注音符號加上一個聲調符號組成。
+      每個讀音都是具有意義的，可以代表一個中文字。當然，
+      不同的中文字也許會有相同的讀音。一個字也可能有數種讀音。
+<item>字(Zhi)：
+      也就是中文字。
+<item>詞音(TsiYin)：
+      一個詞的讀音。一個詞可能有數種讀音。
+<item>詞(Tsi)：
+      由一到數個字所組成。在中文語言上，是最基本又具有意義的單位。
+<item>句(Chu)：
+      一個句子可以表達一個完整的概念，由一到數個詞所組成。
+</itemize>
+</p>
+
+<p>
+libtabe 針對以上各個處理階段都有提供一些函式。也在相臨的處理階段之間，
+提供轉換的函式。往後的章節，將一一介紹每個處理階段中所提供的函式，
+及與相鄰處理階段間的轉換函式。
+</p>
+
+<p>
+使用不同的編碼處理中文時，可能會有不同的性質，
+所以這個函式庫採用 Big5 碼做內碼，需要轉換成其他中文碼時，
+可以使用轉換的函數。
+</p>
+</sect>
+
+<sect>資料結構
+<sect1>前言
+<p>
+在本節中，我們將介紹在 libtabe 中所會使用到的幾個基本資料結構。
+有些資料結構雖然只是其他資料形態的重新定義而已，不過，
+為了不與 C 語言中的資料形態相混淆，我們還是使用這樣的方式。
+</p>
+
+<sect1>定義
+<p>
+<code>
+typedef unsigned char    *ZuYinSymbol;
+typedef unsigned char    *ZuYinSymbolSequence;
+typedef unsigned int      ZuYinIndex;
+
+typedef unsigned int      ZhiCode;
+typedef unsigned char    *Zhi;
+typedef unsigned char    *ZhiStr;
+
+typedef unsigned long int Yin;
+
+struct ZhiInfo {
+  ZhiCode           code;
+  Zhi               chct;
+  Yin               yin[4];
+  unsigned long int refcount; /* should be obsoleted soon */
+};
+
+struct TsiInfo {
+  ZhiStr             tsi;
+  unsigned long int  refcount;
+  unsigned long int  yinnum;
+  Yin               *yindata;
+};
+
+struct TsiYinInfo {
+  Yin               *yin ;
+  unsigned long int  yinlen;
+  unsigned long int  tsinum;
+  ZhiStr             tsidata;
+};
+
+struct ChunkInfo {
+  ZhiStr          chunk;
+  int             num_tsi;
+  struct TsiInfo *tsi;
+};
+
+struct ChuInfo {
+  ZhiStr            chu;
+  int               num_chunk;
+  struct ChunkInfo *chunk;
+};
+
+struct TsiDB {
+  int type;
+  int flags;
+  char *db_name;
+  void *dbp;
+  void *dbcp;
+  .
+  .
+  .
+};
+
+struct TsiYinDB {
+  int type;
+  int flags;
+  char *db_name;
+  void *dbp;
+  void *dbcp;
+  .
+  .
+  .
+};
+</code>
+</p>
+</sect1>
+
+<sect1>說明
+<p>
+<itemize>
+<item>ZhiCode：存放 Big5 碼。
+<item>Zhi：存放一個 Big5 碼表示的中文字。這不一定是一個字串，
+           可能只有兩個 byte 而已。
+<item>ZhiStr：存放一些 Big5 碼表示的中文字。這一定是一個字串，
+               由 NULL 終結。
+<item>Yin：存放一個讀音。
+<item>ZhiInfo：一個中文字的資料結構。透過這個資料結構，
+               可以取得許多有關這個字的資訊。yin 中存放這個字的讀音，
+               最多四個。
+<item>TsiInfo：一個詞的資料結構。透過這個資料結構，
+               可以取得許多有關這個字的資訊。
+               yinnum 與 yindata 中存放的是這個詞的正確讀音，
+               也許不只一個。
+<item>TsiYinInfo：一個詞音的資料結構。yinlen 是這個詞音的長度，
+                  tsinum 是這個讀音共有幾個詞，
+                  tsidata 是這些詞首尾相接存放。
+<item>TsiDB：詞庫的資料結構。透過這個資料結構，
+             可以存取詞庫中的詞，與其他相關資訊。
+<item>TsiYinDB：詞音庫的資料結構。透過這個資料結構，
+                可以存取詞音庫中的同音詞，與其他相關資訊。
+<item>ChunkInfo：用來斷詞的資料結構。要斷詞的片段存放在這裡，
+                 斷出來的詞則存放在 tsi 中。
+<item>ChuInfo：描述一個句子的資料結構。一個句子又可再分為數個片段。
+</itemize>
+</sect1>
+</sect>
+
+<sect>注音符號
+<sect1>前言
+<p>
+注音符號是台灣地區所有人在學習國語時，用來學習發音方法的工具。
+這樣的方法，可以明確的表示一個字的讀音，不會造成混淆。所以，
+libtabe 使用注音符號做為比讀音更小的處理單位。
+</p>
+<p>
+注音符號共有三十七個，再加上五個聲調符號，總計是四十二個。
+為了方便在電腦中處理注音符號，libtabe 從 "ㄅ" 到 "ㄦ"，
+依序給與 1 到 37 的注音編號 (Index)。38 是輕聲(˙)，
+39 到 42 分別是一聲到四聲。0 保留不使用，以方便與讀音處理階段的轉換。
+</p>
+</sect1>
+
+<sect1>tabeZuYinIndexToZuYinSymbol()
+<p>
+<tscreen>
+const Zhi tabeZuYinIndexToZuyinSymbol(ZuYinIndex idx);
+</tscreen>
+</p>
+
+<p>
+在前面所提過的注音編碼 (Index) 與注音符號 (ZuYinSymbol) 之間做轉換。
+</p>
+</sect1>
+
+<sect1>tabeZuYinSymbolToZuYinIndex()
+<p>
+<tscreen>
+int tabeZuYinSymbolToZuYinIndex(ZuYinSymbol sym);
+</tscreen>
+</p>
+
+<p>
+與 tabeZuYinIndexToZuYinSymbol() 相似，只不過是相反的轉換。
+</p>
+</sect1>
+
+<sect1>tabeZozyKeyToZuYinIndex()
+<p>
+<tscreen>
+int tabeZozyKeyToZuYinIndex(int key);
+</tscreen>
+</p>
+<p>
+本函式提供零一中文注音輸入法的按鍵與注音編號之間的轉換。
+</p>
+</sect1>
+</sect>
+
+<sect>讀音
+<sect1>前言
+<p>
+從中文微電腦推廣基金會 (CMEX) 所提供的屬性表中統計得到，
+Big5 碼中所包含的中文字共有 1302 個不同的讀音。
+而每個讀音是由注音符號加聲調符號所組成，
+所以我們就用注音編碼來組成讀音的編碼，方便轉換。
+又，為了與傳統的使用慣例結合，當該讀音是第一聲時，我們並不使用該聲調符號。
+</p>
+
+<p>
+比方說，"ㄓㄨㄥ" 這個讀音就是
+((((<bf>15</bf>*43)+<bf>23</bf>)*43+<bf>36</bf>)*43)+<bf>0</bf>)*43。
+15、23、36 分別是 "ㄓ"、"ㄨ"、"ㄥ" 的注音編號。
+由於一個讀音最多有三個注音符號加一個聲調符號，
+採用這種方式比較就不會混淆，也不需要注音符號出現的位置做特殊的比對。
+</p>
+
+<p>
+CMEX 的屬性檔中，一個中文字最多有四種讀音。
+在 Big5 碼中慣用的 13060 個中文字中，12098 個字只有一個讀音，
+888 個字有兩個讀音，62 個字有三個讀音，10 個字有四個讀音。另外，
+還有兩個字沒有讀音，分別是兀 (0xC94A) 與嗀 (0xDDFC) 這兩個次常用字。
+(因為他們是重覆的字。而且 CMEX 的字形檔中也沒有這兩個字)
+由於我們使用 CMEX 的屬性檔轉出來的對照表，所以這兩個字就不給予讀音。
+</p>
+</sect1>
+
+<sect1>tabeYinToZuYinSymbolSequence()
+<p>
+<tscreen>
+ZuYinSymbolSequence tabeYinToZuyinSymbolSequence(Yin yin);
+</tscreen>
+</p>
+<p>
+將讀音轉為所組成的注音符號與聲調符號。
+</p>
+</sect1>
+
+<sect1>tabeZuYinSymbolSequenceToYin()
+<p>
+<tscreen>
+Yin tabeZuYinSymbolSequenceToYin(ZuYinSymbolSequence str);
+</tscreen>
+</p>
+<p>
+將注音符號與聲調符號的組合轉成讀音。
+</p>
+</sect1>
+
+<sect1>tabeYinLookupZhiList()
+<p>
+<tscreen>
+ZhiStr tabeYinLookupZhiList(Yin yin);
+</tscreen>
+</p>
+
+<p>
+查詢所有具有這個讀音的字。這些字存放在一個字串中。
+</p>
+</sect>
+
+<sect>字
+<sect1>前言
+<p>
+在台灣所慣用的 Big5 碼中，共有 13060 個中文字，
+分別是 5401 個常用字，7652 個次常用字，再加上倚天延伸字集的 7 個中文字。
+</p>
+</sect1>
+
+<sect1>tabeZhiInfoLookupYin()
+<p>
+<tscreen>int tabeZhiInfoLookupYin(struct ZhiInfo *h);
+</tscreen>
+</p>
+
+<p>
+查詢 ZhiInfo 這個資料結構中的 code 所代表的中文字所有的讀音，
+存放在 ZhiInfo 的 yin 中。傳回值如果小於 0，代表該字沒有讀音。
+</p>
+</sect1>
+</sect>
+
+<sect>詞
+<sect1>前言
+<p>
+在這套函式庫中，詞是最重要的處理階段。對中文語言來說，
+詞跟英文中的單字一樣，都是具有意義的最小單位。但是跟英文不同的是，
+中文的詞與詞間沒有明顯的分隔，或是說像英文中的空白一樣，
+可以區隔兩個單字的分隔符號。
+</p>
+<p>
+因此，我們需要斷詞。斷詞能將一串中文字中的詞分隔出來。
+</p>
+<p>
+中文的斷詞目前都是採用比對詞庫的方式來作，
+所以一個足夠大且效率好的詞庫是需要的。
+所以，libtabe 中用 Berkeley DB 來管理詞庫，如此一來，既使詞庫很大時，
+也還能維持很好的效能。
+</p>
+</sect1>
+<sect1>tabeTsiInfoLookupPossibleYin()
+<p>
+<tscreen>
+int tabeBig5TsiLookupPossibleTsiYin(struct TsiInfo *tsi);
+</tscreen>
+查出 TsiInfo 中的 tsi 這個字串所有的詞音。
+詞音的總數存在 TsiInfo 的 yinnum 中，yindata 則是這些詞音，連續存放。
+<p>
+
+<sect1>tabeTsiDBOpen()
+<p>
+<tscreen>
+struct TsiDB *tabeTsiDBOpen(int type, const char *db_name, int flags);
+</tscreen>
+</p>
+<p>
+開啟一個詞庫。type 是詞庫的種類，目前只有 DB_TYPE_DB 一種，
+也就是用 Berkeley DB。flags 是這個資料庫的一些特性，如下：
+<itemize>
+<item>DB_FLAG_OVERWRITE：如果在寫入詞庫時已有重覆的詞，覆寫掉它。
+<item>DB_FLAG_CREATEDB：如果開啟詞庫時找不到此詞庫，新增該檔。
+<item>DB_FLAG_READONLY：開啟詞庫為唯讀狀態。不能與前兩個 flag 混用。
+</itemize>
+</p>
+<p>
+傳回的 TsiDB 就是當呼叫其他詞庫處理函數時第一個參數。
+</p>
+</sect1>
+
+<sect1>tsidb->Close()
+<p>
+<tscreen>
+void tsidb->Close(struct TsiDB *tsidb);
+</tscreen>
+</p>
+<p>
+關閉詞庫。
+</p>
+</sect1>
+
+<sect1>tsidb->RecordNumber()
+<p>
+<tscreen>
+int tsidb->RecordNumber(struct TsiDB *tsidb);
+</tscreen>
+</p>
+<p>
+查詢該詞庫中共有多少筆詞。
+</p>
+</sect1>
+
+<sect1>tsidb->Put()
+<p>
+<tscreen>
+int tsidb->Put(struct TsiDB *tsidb, struct TsiInfo *tsi);
+</tscreen>
+</p>
+<p>
+將 TsiInfo 中的 tsi、refcount、yinnum、yindata 存入詞庫中。
+</p>
+</sect1>
+
+<sect1>tsidb->Get()
+<p>
+<tscreen>
+int tsidb->Get(struct TsiDB *tsidb, struct TsiInfo *tsi);
+</tscreen>
+</p>
+<p>
+查詢詞庫中是否有 TsiInfo 中的 tsi 這個詞。
+有的話將其他資料由詞庫中填入 TsiInfo 中。
+</p>
+</sect1>
+
+<sect1>tsidb->CursorSet()
+<p>
+<tscreen>
+int tsidb->CursorSet(struct TsiDB *tsidb, struct TsiInfo *tsi);
+</tscreen>
+</p>
+<p>
+將詞庫的游標設到 TsiInfo 的 tsi 所指向的地方。如果 tsi 不存在，
+則指向第一筆記錄。同時也將該詞填入 TsiInfo 中。
+</p>
+</sect1>
+
+<sect1>tsidb->CursorNext()
+<p>
+<tscreen>
+int tsidb->CursorNext(struct TsiDB *tsidb, struct TsiInfo *tsi);
+</tscreen>
+</p>
+<p>
+讀取下一筆詞。
+</p>
+</sect1>
+
+<sect1>tsidb->CursorPrev()
+<p>
+<tscreen>
+int tsidb->CursorPrev(struct TsiDB *tsidb, struct TsiInfo *tsi);
+</tscreen>
+</p>
+<p>
+讀取上一筆詞。
+</p>
+</sect1>
+</sect>
+
+<sect>詞音
+<sect1>前言
+<p>
+詞音為詞的讀音。
+</p>
+</sect1>
+<sect1>tabeTsiYinDBOpen()
+<p>
+<tscreen>
+struct TsiYinDB *tabeTsiYinDBOpen(int type, const char *db_name, int flags);
+</tscreen>
+</p>
+<p>
+開啟一個詞音庫。type 是詞庫的種類，目前只有 DB_TYPE_DB 一種，
+也就是用 Berkeley DB。flags 是這個資料庫的一些特性，如下：
+<itemize>
+<item>DB_FLAG_OVERWRITE：如果在寫入詞音庫時已有重覆的詞音，覆寫掉它。
+<item>DB_FLAG_CREATEDB：如果開啟詞音庫時找不到此詞音庫，新增該檔。
+<item>DB_FLAG_READONLY：開啟詞音庫為唯讀狀態。不能與前兩個 flag 混用。
+</itemize>
+</p>
+<p>
+傳回的 TsiYinDB 就是當呼叫其他詞庫處理函數時第一個參數。
+</p>
+</sect1>
+
+<sect1>yindb->Close()
+<p>
+<tscreen>
+void yindb->Close(struct TsiYinDB *yindb);
+</tscreen>
+</p>
+<p>
+關閉詞音庫。
+</p>
+</sect1>
+
+<sect1>yindb->RecordNumber()
+<p>
+<tscreen>
+int tabeTsiYinDBRecordNumber(struct Big5TsiYinDB *yindb);
+</tscreen>
+</p>
+<p>
+查詢該詞音庫中共有多少筆詞音。
+</p>
+</sect1>
+
+<sect1>yindb->Put()
+<p>
+<tscreen>
+int yindb->Put(struct TsiYinDB *yindb, struct TsiYinInfo *yin);
+</tscreen>
+</p>
+<p>
+將 TsiYinInfo 中的 yin、yinlen、tsinum、tsidata 存入詞音庫中。
+</p>
+</sect1>
+
+<sect1>yindb->Get()
+<p>
+<tscreen>
+int yindb->Get(struct TsiYinDB *yindb, struct TsiYinInfo *yin);
+</tscreen>
+</p>
+<p>
+查詢詞庫中是否有 TsiYinInfo 中的 yin 這個詞音。
+有的話將其他資料由詞音庫中填入 TsiYinInfo 中。
+</p>
+</sect1>
+
+<sect1>yindb->CursorSet()
+<p>
+<tscreen>
+int yindb->CursorSet(struct TsiYinDB *yindb, struct TsiYinInfo *tsiyin);
+</tscreen>
+</p>
+<p>
+將詞音庫的游標設到 TsiYinInfo 的 yin 所指向的地方。如果 yin 不存在，
+則指向第一筆記錄。同時也將該詞填入 TsiYinInfo 中。
+</p>
+</sect1>
+
+<sect1>yindb->CursorNext()
+<p>
+<tscreen>
+int yindb->CursorNext(struct TsiYinDB *yindb, struct TsiYinInfo *yin);
+</tscreen>
+</p>
+<p>
+讀取下一筆詞音。
+</p>
+</sect1>
+
+<sect1>yindb->CursorPrev()
+<p>
+<tscreen>
+int yindb->CursorPrev(struct TsiYinDB *yindb, struct TsiYinInfo *yin);
+</tscreen>
+</p>
+<p>
+讀取上一筆詞音。
+</p>
+</sect1>
+</sect>
+
+<sect>句
+<sect1>前言
+<p>
+為了讓人與電腦在字與詞的處理上取得平衡，
+我們設定人跟電腦溝通的最小單位是句子。不過句子的定義太過模糊，
+再加上個人在電腦上使用中文的習慣不盡相同，所以何為『句』的界限很難界定。
+『片段』是我們在句與詞之間加入的一個中間媒介。
+一個『片段』全為中文字所組成，為非中文字所區隔。一個句子可以有許多片段。
+</p>
+<p>
+針對句子的處理，除了把它細分為字，更重要的是要有詞的觀念。
+所以斷詞是這個階段的重要處理函數。
+</p>
+</sect1>
+
+<sect1>tabeChuInfoToChunkInfo()
+<p>
+<tscreen>
+int tabeChuInfoToChunkInfo(struct ChuInfo *chu);
+</tscreen>
+</p>
+<p>
+將 ChuInfo 中的 ChunkInfo 找出來。ChunkInfo 總數存放於 num_chunk 中，
+而 chunk[i] 是指第 i+1 個 ChunkInfo。
+</p>
+</sect1>
+
+<sect1>tabeChunkInfoSegmentationSimplex()
+<p>
+<tscreen>
+int tabeChunkInfoSegmentationSimplex(struct TsiDB *tsidb,
+                                     struct ChunkInfo *chunk);
+</tscreen>
+</p>
+<p>
+使用最基本的『長詞優先法則』將 ChunkInfo 中的詞都找出來。
+每個詞都存放於一個 TsiInfo 資料結構中，tsi[i] 是指第 i+1 個詞。
+詞的總數存放於 num_tsi 中。
+</p>
+</sect1>
+
+<sect1>tabeChunkInfoSegmentationComplex()
+<p>
+<tscreen>
+int tabeChunkInfoSegmentationComplex(struct TsiDB *tsidb,
+                                     struct ChunkInfo *chunk);
+</tscreen>
+</p>
+<p>
+使用蔡志浩的斷詞演算法將 ChunkInfo 中的詞都找出來。
+每個詞都存放於一個 TsiInfo 資料結構中，tsi[i] 是指第 i+1 個詞。
+詞的總數存放於 num_tsi 中。
+</p>
+<p>
+有關蔡志浩的斷詞演算法可參考
+<htmlurl
+ url="http://casper.beckman.uiuc.edu/~c-tsai4/chinese/wordseg/mmseg.html"
+name="http://casper.beckman.uiuc.edu/~c-tsai4/chinese/wordseg/mmseg.html">
+</p>
+</sect1>
+
+<sect1>tabeChunkInfoSegmentationBackward()
+<p>
+<tscreen>
+int tabeChunkInfoSegmentationBackward(struct TsiDB *tsidb,
+                                      struct ChunkInfo *chunk);
+</tscreen>
+</p>
+<p>
+使用林宣華 (shlin@iis.sinica.edu.tw) 的斷詞演算法將 ChunkInfo
+中的詞都找出來。每個詞都存放於一個 TsiInfo 資料結構中，
+tsi[i] 是指第 i+1 個詞。詞的總數存放於 num_tsi 中。
+</p>
+</sect1>
+</sect>
+
+</article>

@@ -1,0 +1,87 @@
+
+Please read the file COPYING for more information for your rights
+and limitations for materials in this directory.
+
+$Id: README,v 1.1 2000/12/09 09:14:17 thhsieh Exp $
+
+===============================================================================
+
+0. Table of Content
+  1. Introduction
+  2. The lexicon
+  3. The reference count
+  4. The pronunciation data
+  5. Author Information
+
+1. Introduction
+
+  tsi.src contains 138614 chinese lexicons in Big5 encoding
+compiled from 3 sources. They are
+
+  (1) Chih-Hao Tsai
+
+      http://casper.beckman.uiuc.edu/~c-tsai4/chinese/wordlists.html
+
+  (2) IOME
+
+  (3) Xcin
+
+  Lexicons from these sources are then be merged and slightly
+modified.
+
+  Each line in tsi.src represents describe a lexicon. Each line
+consists of two to three fields, they are
+
+  (1) the lexicon itself
+
+  (2) the reference count summarized by the
+      Computer Systems and Communication Lab,
+      Institute of Information Science, Academia Sinica
+
+  (3) the pronunciation in BoPoMoFo which was summarized
+      from various sources and majorly edited manually
+
+the pronunciation in BoPoMoFo may not be present, and each field is
+separated by space character(' ').
+
+2. The lexicon
+
+  Despite of the first source listed in the first section, I can hardly
+find obvious reference point for the second and the third sources. 
+
+  The first source contributes over 95% lexicons to the collecton.
+
+3. The reference count
+
+  The reference count is important for some applications, but there
+does not exist freely accessible corpus for generating the referece
+count. I asked CCL, IIS, Academia Sinica, where I was working for,
+for the permission to gather information from a corpus consists of
+HTML pages gathered from the Internet sites in Taiwan and granted.
+
+  I sampled 1,200,000 pages from the database (which contains more
+than 2,000,000 pages at that time) at the beginning of March, 1999.
+The pages are gathered in December, 1998.
+
+  Maximum Matching Segmentation Algorithm is the method I used to
+identify lexicons present in each HTML page. You can read
+
+  http://casper.beckman.uiuc.edu/~c-tsai4/chinese/wordseg/mmseg.html
+
+for more information about the algorithm.
+
+  Some lexicons have 0 reference count.
+
+4. The pronunciation
+
+  Pronunciation is also important for some applications, so I started
+to collect available data from the Internet as well as asked friends
+to edit the data.
+
+  Some of the pronunciation data are not correct and some of them are
+not present.
+
+5. Author Information
+
+  shawn@eecs.harvard.edu
+

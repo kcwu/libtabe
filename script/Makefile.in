@@ -1,0 +1,21 @@
+#
+# Copyright 1999, TaBE Project, All Rights Reserved.
+# Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
+#
+# $Id: Makefile.in,v 1.1 2000/12/09 09:14:09 thhsieh Exp $
+#
+@SET_MAKE@
+
+all:
+	(cd src; $(MAKE))
+
+.PHONY: clean distclean install
+clean:
+	(cd src; $(MAKE) clean)
+
+distclean:
+	(cd src; $(MAKE) distclean)
+	rm -f Makefile config.h config.cache config.log config.status
+
+install:
+	(cd src; $(MAKE) install)
