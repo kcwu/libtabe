@@ -16,6 +16,8 @@
    Thanks to Kuang-che Wu <kcwu@ck.tp.edu.tw>.
 
 5. Add util/tsiguess.c.
+   Add API: tabeChunkInfoFree(), tabeChunkInfoNew(), tabeTsiInfoNew(),
+	    tabeTsiInfoFree().
    Thanks to Pofeng Lee <informer@ns1.m2000.idv.tw>.
 
 
