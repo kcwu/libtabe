@@ -1,3 +1,25 @@
+0.2.4: 2001/09/
+---------------------
+1. Complete the ZhuYin filling project of tsi.src.
+
+2. Update libtool to version 1.4 (1.920 2001/04/24 23:26:18).
+   Use -rpath to replace $extra_link_flag in configure.in.
+   Configure options changed:
+	--enable-merge-db
+	--with-db-inc=PATH
+	--with-db-lib=PATH
+	--with-db-bin=PATH
+
+3. Remove tabe_zhi2yin.h. libtabe API changed:
+	Remove struct ZhiInfo. Use struct TsiInfo to replace it.
+	Change tabeZhiInfoLookupYin() to tabeTsiInfoLookupZhiYin().
+	Change API: tabeTsiInfoLookupPossibleTsiYin().
+   Modify bims.c, tsiadd.c, tsiyindump.c, tsiyincheck.c for the API change.
+
+4. Add libbims new API:
+	bimsReturnDBPool().
+
+
 0.2.3: 2001/08/20
 ---------------------
 1. Fix compilation warnings in HP-UX in tabe_chu.c

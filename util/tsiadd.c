@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tsiadd.c,v 1.1 2001/08/20 03:53:11 thhsieh Exp $
+ * $Id: tsiadd.c,v 1.2 2001/09/20 00:30:25 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -375,7 +375,7 @@ archive(struct TsiDB *db, FILE *fp, int ref, int tsiyin, int verbose)
       }
     }
     else {
-      tabeTsiInfoLookupPossibleTsiYin(tsi);
+      tabeTsiInfoLookupPossibleTsiYin(db, tsi);
       if (tsi->yinnum > 1) {
         tsi->yinnum = 0;
         free(tsi->yindata);

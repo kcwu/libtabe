@@ -2,7 +2,7 @@
 # Copyright 1999, TaBE Project, All Rights Reserved.
 # Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
 #
-# $Id: Makefile.in,v 1.5 2001/08/20 03:53:04 thhsieh Exp $
+# $Id: Makefile.in,v 1.6 2001/09/20 00:30:24 thhsieh Exp $
 #
 CC              = @CC@
 CFLAGS          = @CFLAGS@
@@ -10,8 +10,8 @@ CPPFLAGS        = @CPPFLAGS@
 DEFS            = @DEFS@
 RANLIB          = @RANLIB@
 LN_S            = @LN_S@
-LDFLAGS         = @db_library@
-INC             = -I@x_includes@ @db_include@ -I../..
+LDFLAGS         = @with_db_lib@
+INC             = -I../.. -I@x_includes@ @with_db_inc@
 INSTALL         = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA    = @INSTALL_DATA@

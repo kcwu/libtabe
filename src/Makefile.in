@@ -2,7 +2,7 @@
 # Copyright 1999, TaBE Project, All Rights Reserved.
 # Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
 #
-# $Id: Makefile.in,v 1.5 2001/08/21 05:44:53 thhsieh Exp $
+# $Id: Makefile.in,v 1.6 2001/09/20 00:30:23 thhsieh Exp $
 #
 CC              = @CC@
 CFLAGS          = @CFLAGS@
@@ -10,8 +10,8 @@ CPPFLAGS        = @CPPFLAGS@
 DEFS            = @DEFS@
 RANLIB          = @RANLIB@
 LN_S            = @LN_S@
-LDFLAGS	        = @db_library@
-INC	        = @db_include@
+LDFLAGS	        = @with_db_lib@
+INC	        = @with_db_inc@
 INSTALL         = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA    = @INSTALL_DATA@
@@ -70,7 +70,7 @@ tabe_util.lo: tabe_util.c tabe.h tabe_charref.h
 tabe_zuyin.lo: tabe_zuyin.c tabe.h
 	$(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS) $(DEFS) $(INC) -o $@ tabe_zuyin.c
 
-tabe_yin.lo: tabe_yin.c tabe.h tabe_zhi2yin.h tabe_yin2zhi.h
+tabe_yin.lo: tabe_yin.c tabe.h tabe_yin2zhi.h
 	$(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS) $(DEFS) $(INC) -o $@ tabe_yin.c
 
 tabe_tsi.lo: tabe_tsi.c tabe.h

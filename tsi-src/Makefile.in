@@ -2,7 +2,7 @@
 # Copyright 1999, TaBE Project, All Rights Reserved.
 # Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
 #
-# $Id: Makefile.in,v 1.1 2001/08/20 03:53:10 thhsieh Exp $
+# $Id: Makefile.in,v 1.2 2001/09/20 00:30:24 thhsieh Exp $
 #
 INSTALL         = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -18,10 +18,8 @@ libdir		= @libdir@
 bindir		= @bindir@
 datadir		= @datadir@/tabe/tsiyin
 LIBTOOL		= $(top_srcdir)/libtool
-db_bin		= @db_bin@
-mergedb		= @enable_mergedb@
-DB_DUMP		= @DB_DUMP@
-DB_LOAD		= @DB_LOAD@
+db_bin		= @with_db_bin@
+mergedb		= @enable_merge_db@
 
 RELEASE_VER	= @RELEASE_VER@
 CURRENT_VER	= @CURRENT_VER@

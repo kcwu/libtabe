@@ -4,7 +4,7 @@
  * Copyright 1999, Chih-Hao Tsai, All Rights Reserved.
  * Copyright 1999, Shian-Hua Lin, All Rights Reserved.
  *
- * $Id: tabe_tsi.c,v 1.1 2000/12/09 09:14:12 thhsieh Exp $
+ * $Id: tabe_tsi.c,v 1.2 2001/09/20 00:30:23 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -21,21 +21,25 @@
  * given a Tsi, loaded with all possible TsiYins
  */
 int
-tabeTsiInfoLookupPossibleTsiYin(struct TsiInfo *tsi)
+tabeTsiInfoLookupPossibleTsiYin(struct TsiDB *tsidb, struct TsiInfo *tsi)
 {
-  struct ZhiInfo *zhi;
+  struct TsiInfo *zhi;
+  char zhi_buf[5];
   int len = strlen((char *)tsi->tsi)/2;
   Yin *yin, *yindata;
   int rval, i, j;
-  int limit, index, valid, num;
+  int index, num;
 
   /* allocate enough Zhi structure */
-  zhi = (struct ZhiInfo *)malloc(sizeof(struct ZhiInfo)*len);
-  memset(zhi, 0, sizeof(struct ZhiInfo)*len);
+  zhi = (struct TsiInfo *)malloc(sizeof(struct TsiInfo)*len);
+  memset(zhi, 0, sizeof(struct TsiInfo)*len);
 
   for (i = 0; i < len; i++) {
-    zhi[i].code = tabeZhiToZhiCode(tsi->tsi+i*2);
-    rval = tabeZhiInfoLookupYin(zhi+i);
+    zhi_buf[0] = (char)tsi->tsi[i*2];
+    zhi_buf[1] = (char)tsi->tsi[i*2+1];
+    zhi_buf[2] = '\0';
+    zhi[i].tsi = zhi_buf;
+    rval = tabeTsiInfoLookupZhiYin(tsidb, zhi+i);
     if (rval < 0) {
       fprintf(stderr,
 	      "tabeTsiInfoLookupPossibleTsiYin():%s: a Zhi with no Yins.\n",
@@ -43,29 +47,21 @@ tabeTsiInfoLookupPossibleTsiYin(struct TsiInfo *tsi)
     }
   }
 
-  yin = (Yin *)malloc(sizeof(Yin)*len);
-  yindata = (Yin *)NULL;
-  num = 0;
-  limit = 1;
-  for (i = 0; i < len; i++) {  /* calculate maxmium combinations */
-    limit = limit * 4;
+  num = 1;
+  for (i = 0; i < len; i++) {  /* calculate total combinations */
+    num = num * zhi[i].yinnum;
   }
-  for (i = 0; i < limit; i++) {
-    valid = 1;
+  yin = (Yin *)malloc(sizeof(Yin)*len);
+  yindata = (Yin *)malloc(sizeof(Yin)*len*num);
+  memset(yindata, 0, sizeof(Yin)*len*num);
+  for (i = 0; i < num; i++) {
+    index = i;
     memset(yin, 0, sizeof(Yin)*len);
     for (j = 0; j < len; j++) {
-      index = (i >> j*2)%4;
-      if (zhi[j].yin[index] == 0) {
-	valid = 0;
-	break;
-      }
-      yin[j] = zhi[j].yin[index];
+      yin[j] = zhi[j].yindata[index % zhi[j].yinnum];
+      index /= zhi[j].yinnum;
     }
-    if (valid) {
-      yindata = (Yin *)realloc(yindata, sizeof(Yin)*len*(num+1));
-      memcpy(yindata+(len*num), yin, sizeof(Yin)*len);
-      num++;
-    }
+    memcpy(yindata+(len*i), yin, sizeof(Yin)*len);
   }
 
   if (tsi->yinnum && tsi->yindata) {
@@ -74,6 +70,11 @@ tabeTsiInfoLookupPossibleTsiYin(struct TsiInfo *tsi)
   tsi->yinnum = num;
   tsi->yindata = yindata;
 
+  for (i = 0; i < len; i++) {
+    if (zhi[i].yindata) {
+      free(zhi[i].yindata);
+    }
+  }
   free(zhi);
 
   return(num);

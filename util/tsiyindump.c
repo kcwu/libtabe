@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tsiyindump.c,v 1.1 2001/08/20 03:53:11 thhsieh Exp $
+ * $Id: tsiyindump.c,v 1.2 2001/09/20 00:30:25 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -62,7 +62,7 @@ dump(struct TsiDB *db, struct TsiYinDB *ydb)
     }
     i++;
     if (!tsi->yinnum) {
-      tabeTsiInfoLookupPossibleTsiYin(tsi);
+      tabeTsiInfoLookupPossibleTsiYin(db, tsi);
     }
     len = strlen((char *)tsi->tsi)/2;
     for (j = 0; j < tsi->yinnum; j++) {

@@ -32,7 +32,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: bims.c,v 1.5 2001/08/20 03:53:04 thhsieh Exp $
+ * $Id: bims.c,v 1.6 2001/09/20 00:30:24 thhsieh Exp $
  */
 #ifdef HAVE_CONFIG_H
 #include "../../../config.h"
@@ -336,10 +336,36 @@ bimsDBPoolDelete(char *tsidb_name, char *yindb_name)
   }
 
   if (i != j) {
-    fprintf(stderr, "bimsDBDelete: remove dbs that are not in pair\n");
+    fprintf(stderr, "bimsDBPoolDelete: remove dbs that are not in pair\n");
   }
 
   return (rval);
+}
+
+int
+bimsReturnDBPool(struct TsiDB **tsidb, struct TsiYinDB **yindb)
+{
+  int i, cnt=0;
+
+  if (len_pool > 0) {
+    *tsidb = malloc(sizeof(struct TsiDB *) * len_pool);
+    *yindb = malloc(sizeof(struct TsiYinDB *) * len_pool);
+    for (i=0; i<len_pool; i++) {
+      if (tdb_pool[i] != NULL && ydb_pool[i] != NULL) {
+        tsidb[cnt] = tdb_pool[i];
+        yindb[cnt] = ydb_pool[i];
+        cnt ++;
+      }
+    }
+  }
+  else if (tdb != NULL && ydb != NULL) {
+    *tsidb = malloc(sizeof(struct TsiDB *));
+    *yindb = malloc(sizeof(struct TsiYinDB *));
+    *tsidb = tdb;
+    *yindb = ydb;
+    cnt = 1;
+  }
+  return cnt;
 }
 
 /*
@@ -717,7 +743,8 @@ bimsYinChooseZhi(Yin yin)
   ZhiCode code;
   int len, i, idx;
   unsigned long int max, refcount;
-  struct ZhiInfo zhi;
+  struct TsiInfo zhi;
+  char zhi_buf[5];
   
   str = tabeYinLookupZhiList(yin);
   if (!str) {
@@ -726,7 +753,10 @@ bimsYinChooseZhi(Yin yin)
   len = strlen((char *)str)/2;
   max = 0;
   idx = 0;
-  zhi.code = (ZhiCode)0;
+  zhi.tsi = (ZhiStr)zhi_buf;
+  zhi.refcount = 0;
+  zhi.yinnum = 0;
+  zhi.yindata = NULL;
 
   for (i = 0; i < len; i++) {
     code = tabeZhiToZhiCode(str+i*2);
@@ -734,17 +764,21 @@ bimsYinChooseZhi(Yin yin)
     if (refcount > max) {
       max = refcount;
       idx = i;
-      zhi.code = code;
+      zhi_buf[0] = str[i*2];
+      zhi_buf[1] = str[i*2+1];
+      zhi_buf[2] = '\0';
     }
   }
 
   z = (Zhi)malloc(sizeof(unsigned char)*3);
-  tabeZhiInfoLookupYin(&zhi);
-  if (zhi.yin[1] != (Yin)0)		/* zhi has more than one yin */
-     strncpy((char *)z, (char *)str, 2);
+  tabeTsiInfoLookupZhiYin(tdb, &zhi);
+  if (zhi.yinnum > 1)			/* zhi has more than one yin */
+    strncpy((char *)z, (char *)str, 2);
   else
-     strncpy((char *)z, (char *)str+idx*2, 2);
+    strncpy((char *)z, (char *)str+idx*2, 2);
   z[2] = (unsigned char)NULL;
+  if (zhi.yindata)
+    free(zhi.yindata);
 
   return(z);
 }
@@ -1866,7 +1900,7 @@ bimsFetchText(unsigned long int bcid, int len)
       if (ti.tsi) { free(ti.tsi); }
       ti.tsi = (ZhiStr)calloc(ylen*2+1, sizeof(char));
       if (!ti.tsi) { break; }
-      strncpy(ti.tsi, bc->internal_text+(yoff*2), ylen*2);
+      strncpy((char *)ti.tsi, (char *)bc->internal_text+(yoff*2), ylen*2);
       rval = tdb->Get(tdb, &ti);
       if (rval == 0) {
 	for (j = 0; j < ti.yinnum; j++) {

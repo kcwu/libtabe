@@ -3,10 +3,10 @@
 # Copyright 1999, TaBE Project, All Rights Reserved.
 # Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
 #
-# $Id: tsipackdb.in,v 1.1 2001/08/20 03:53:11 thhsieh Exp $
+# $Id: tsipackdb.in,v 1.2 2001/09/20 00:30:25 thhsieh Exp $
 #
 
-PATH=@db_bin@
+PATH=@with_db_bin@
 USE_DB=@USE_DB@
 
 DB2_VER='6	Btree version number.'

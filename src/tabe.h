@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tabe.h,v 1.2 2001/08/20 03:53:03 thhsieh Exp $
+ * $Id: tabe.h,v 1.3 2001/09/20 00:30:23 thhsieh Exp $
  *
  */
 #ifndef __TABE_H__
@@ -21,13 +21,6 @@ typedef unsigned char     *Zhi;
 typedef unsigned char     *ZhiStr;
 
 typedef unsigned short int Yin;
-
-struct ZhiInfo {
-  ZhiCode           code;
-  Zhi               chct;
-  Yin               yin[4];
-  unsigned long int refcount; /* should be obsoleted soon */
-};
 
 struct TsiInfo {
   ZhiStr             tsi;
@@ -97,7 +90,8 @@ enum {
 
 struct TsiDB       *tabeTsiDBOpen(int type, const char *db_name, int flags);
 
-int                 tabeTsiInfoLookupPossibleTsiYin(struct TsiInfo *tsi);
+int                 tabeTsiInfoLookupPossibleTsiYin(struct TsiDB *tsidb,
+                                                    struct TsiInfo *tsi);
 
 struct TsiYinDB    *tabeTsiYinDBOpen(int type, const char *db_name,
 				     int flags);
@@ -111,7 +105,8 @@ int                 tabeChunkSegmentationComplex(struct TsiDB *tsidb,
 int                 tabeChunkSegmentationBackward(struct TsiDB *tsidb,
 						  struct ChunkInfo *chunk);
 
-int                 tabeZhiInfoLookupYin(struct ZhiInfo *h);
+int                 tabeTsiInfoLookupZhiYin(struct TsiDB *tsidb,
+                                            struct TsiInfo *z);
 ZhiStr              tabeYinLookupZhiList(Yin yin);
 
 ZuYinSymbolSequence tabeYinToZuYinSymbolSequence(Yin yin);

@@ -3,7 +3,7 @@
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  * Copyright 1999, Yung-Ching Hsiao, All Rights Reserved.
  *
- * $Id: tabe_yin.c,v 1.1 2000/12/09 09:14:12 thhsieh Exp $
+ * $Id: tabe_yin.c,v 1.2 2001/09/20 00:30:23 thhsieh Exp $
  *
  */
 
@@ -20,11 +20,7 @@
 #include <string.h>
 #include "tabe.h"
 
-#include "tabe_zhi2yin.h"
 #include "tabe_yin2zhi.h"
-
-static int num_of_zyt_entries =
-           sizeof(_ZhiYinTable)/sizeof(struct ZhiYin);
 
 static int num_of_yzt_entries =
            sizeof(_YinZhiTable)/sizeof(struct YinZhi);
@@ -38,30 +34,10 @@ static int yzt_threshold = 0;
  *
  */
 int
-tabeZhiInfoLookupYin(struct ZhiInfo *z)
+tabeTsiInfoLookupZhiYin(struct TsiDB *tsidb, struct TsiInfo *z)
 {
-  int index;
-  int num, i;
-
-  index = tabeZhiCodeToPackedBig5Code(z->code);
-  if (index >= 0 && index < num_of_zyt_entries) {
-    if (!_ZhiYinTable[index].yindata[0]) { /* no Yin defined */
-      return(-1);
-    }
-    num = (_ZhiYinTable[index].yindata[0]) & 0xC000;
-    num = num >> 14;
-    num += 1;
-    for (i = 0; i < num; i++) {
-      z->yin[i] = _ZhiYinTable[index].yindata[i] & 0x3FFF;
-    }
-    for (i = num; i < 4; i++) {
-      z->yin[i] = 0;
-    }
-    return(0);
-  }
-  else {
-    return(-1);
-  }
+  z->tsi[2] = '\0';
+  return tsidb->Get(tsidb, z);
 }
 
 /*

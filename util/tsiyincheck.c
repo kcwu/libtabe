@@ -3,7 +3,7 @@
  *
  * Contributed by Kuang-che Wu <kcwu@ck.tp.edu.tw>
  *
- * $Id: tsiyincheck.c,v 1.1 2001/08/20 03:53:11 thhsieh Exp $
+ * $Id: tsiyincheck.c,v 1.2 2001/09/20 00:30:25 thhsieh Exp $
  */
 #include <stdio.h>
 #include <string.h>
@@ -33,7 +33,7 @@ char *YinSeqToZuYin(Yin yin[],int n,int len)
         strcat(str,".");
       else {
         ZhiStr symbol=tabeYinToZuYinSymbolSequence(yin[i*len+j]);
-        strcat(str,symbol);
+        strcat(str,(char *)symbol);
         free(symbol);
       }
       if(j!=len-1)
@@ -45,23 +45,22 @@ char *YinSeqToZuYin(Yin yin[],int n,int len)
   return str;
 }
 
-int isCMEXyin(Zhi zhi, Yin yin, char **zuyin)
+int isCMEXyin(struct TsiDB *db, Zhi zhi, Yin yin, char **zuyin)
 {
   int i;
-  int yinnum;
-  struct ZhiInfo zhiinfo;
+  struct TsiInfo zhiinfo;
 
   if(zuyin) *zuyin="";
 
-  zhiinfo.code=tabeZhiToZhiCode(zhi);
-  yinnum=tabeZhiInfoLookupYin(&zhiinfo);
-  if(yinnum<0) return 0;
+  zhiinfo.tsi=zhi;
+  if (tabeTsiInfoLookupZhiYin(db,&zhiinfo) < 0)
+    return 0;
 
   if(zuyin)
-    *zuyin=YinSeqToZuYin(zhiinfo.yin,1,4);
+    *zuyin=YinSeqToZuYin(zhiinfo.yindata,1,zhiinfo.yinnum);
 
-  for(i=0;i<4;i++)
-    if(zhiinfo.yin[i]==yin)
+  for(i=0;i<zhiinfo.yinnum;i++)
+    if(zhiinfo.yindata[i]==yin)
       return 1;
   return 0;
 }
@@ -76,8 +75,8 @@ int isDByin(struct TsiDB *db, Zhi zhi, Yin yin, char **zuyin)
   if(yin==0) return 0;
 
   memset(&tsi,0,sizeof(tsi));
-  tsi.tsi=(char*)calloc(1,1024);
-  strncpy(tsi.tsi,zhi,2);
+  tsi.tsi=(ZhiStr)calloc(1,1024);
+  strncpy((char *)tsi.tsi,(char *)zhi,2);
   tsi.tsi[2]=0;
   db->Get(db,&tsi);
 
@@ -102,14 +101,14 @@ void check_cmex_yin(struct TsiDB *db, struct TsiYinDB *yindb, FILE *fp)
   char *zuyin;
 
   memset(&tsi,0,sizeof(struct TsiInfo));
-  tsi.tsi=(char*)calloc(1,1024);
+  tsi.tsi=(ZhiStr)calloc(1,1024);
 
   for(rval=db->CursorSet(db,&tsi);rval>=0;rval=db->CursorNext(db,&tsi)) {
-    int len=strlen(tsi.tsi)/2;
+    int len=strlen((char *)tsi.tsi)/2;
     for(i=0;i<tsi.yinnum;i++)
       for(j=0;j<len;j++) {
         Yin yin=tsi.yindata[i*len+j];
-	if(!isCMEXyin(tsi.tsi+j*2,yin,&zuyin)) {
+	if(!isCMEXyin(db,tsi.tsi+j*2,yin,&zuyin)) {
           ZhiStr symbol=tabeYinToZuYinSymbolSequence(yin);
  	  fprintf(fp,"%s:%c%c:",tsi.tsi,tsi.tsi[j*2],tsi.tsi[j*2+1]);
 	  fprintf(fp,"%s:%s\n",(yin?(char *)symbol:"(yin=0)"),zuyin);
@@ -131,10 +130,10 @@ void check_consistency(struct TsiDB *db, struct TsiYinDB *yindb, FILE *fp)
   char *zuyin;
 
   memset(&tsi,0,sizeof(struct TsiInfo));
-  tsi.tsi=(char*)calloc(1,1024);
+  tsi.tsi=(ZhiStr)calloc(1,1024);
 
   for(rval=db->CursorSet(db,&tsi);rval>=0;rval=db->CursorNext(db,&tsi)) {
-    int len=strlen(tsi.tsi)/2;
+    int len=strlen((char *)tsi.tsi)/2;
     for(i=0;i<tsi.yinnum;i++)
       for(j=0;j<len;j++) {
         Yin yin=tsi.yindata[i*len+j];
@@ -162,11 +161,11 @@ void check_maybe_tsi_typo(struct TsiDB *db, struct TsiYinDB *yindb, FILE *fp)
   static char same2[]="»O,ÃÒ,·Ï,¦Ã,·Ã,¨H,µü";
 
   memset(&tsi,0,sizeof(struct TsiInfo));
-  tsi.tsi=(char*)calloc(1,1024);
+  tsi.tsi=(ZhiStr)calloc(1,1024);
   memset(&yin,0,sizeof(yin));
 
   for(rval=db->CursorSet(db,&tsi);rval>=0;rval=db->CursorNext(db,&tsi)) {
-    int len=strlen(tsi.tsi)/2;
+    int len=strlen((char *)tsi.tsi)/2;
     if(len<3) continue;
 
     for(i=0;i<tsi.yinnum;i++) {
@@ -176,25 +175,26 @@ void check_maybe_tsi_typo(struct TsiDB *db, struct TsiYinDB *yindb, FILE *fp)
 
       for(j=0;j<yin.tsinum;j++) {
 	ZhiStr tsi2=yin.tsidata+len*j*2;
-	if(strncmp(tsi.tsi,tsi2,len*2)<0) { // only check tsi1<tsi2
+	/* only check tsi1<tsi2 */
+	if(strncmp((char *)tsi.tsi,(char *)tsi2,len*2)<0) { 
 	  int diff=0;
 	  int pos=-1;
 	  for(k=0;k<len;k++)
-	    if(strncmp(tsi.tsi+k*2,tsi2+k*2,2)) {
+	    if(strncmp((char *)tsi.tsi+k*2,(char *)tsi2+k*2,2)) {
 	      diff++;
 	      pos=k;
 	    }
 	  if(diff==1) {
 	    char str[80];
             char word[2][3];
-            strncpy(word[0],tsi.tsi+pos*2,2);
+            strncpy(word[0],(char *)tsi.tsi+pos*2,2);
             word[0][2]=0;
-            strncpy(word[1],tsi2+pos*2,2);
+            strncpy(word[1],(char *)tsi2+pos*2,2);
             word[1][2]=0;
             if(strstr(same1,word[0])-same1==strstr(same2,word[1])-same2 ||
                strstr(same1,word[1])-same1==strstr(same2,word[0])-same2)
               continue;
-	    strncpy(str,tsi2,len*2);
+	    strncpy(str,(char *)tsi2,len*2);
 	    str[len*2]=0;
 	    fprintf(fp,"%s:%s\n%s\n",tsi.tsi,YinSeqToZuYin(yin.yin,1,len),str);
 	  }
@@ -237,13 +237,13 @@ int main(int argc, char *argv[])
   while ((ch = getopt(argc, argv, "d:f:y:")) != -1) {
     switch(ch) {
       case 'd':
-        db_name = strdup(optarg);
+        db_name = (char *)strdup(optarg);
         break;
       case 'f':
-        op_name = strdup(optarg);
+        op_name = (char *)strdup(optarg);
         break;
       case 'y':
-	yindb_name = strdup(optarg);
+	yindb_name = (char *)strdup(optarg);
 	break;
       default:
         usage();
