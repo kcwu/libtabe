@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tabe.h,v 1.4 2001/10/14 11:32:25 thhsieh Exp $
+ * $Id: tabe.h,v 1.5 2001/10/15 16:17:52 thhsieh Exp $
  *
  */
 #ifndef __TABE_H__
@@ -58,7 +58,7 @@ struct TsiDB {
   int  (*RecordNumber)(struct TsiDB *tsidb);
   int  (*Put)(struct TsiDB *tsidb, struct TsiInfo *tsi);
   int  (*Get)(struct TsiDB *tsidb, struct TsiInfo *tsi);
-  int  (*CursorSet)(struct TsiDB *tsidb, struct TsiInfo *tsi);
+  int  (*CursorSet)(struct TsiDB *tsidb, struct TsiInfo *tsi, int set_range);
   int  (*CursorNext)(struct TsiDB *tsidb, struct TsiInfo *tsi);
   int  (*CursorPrev)(struct TsiDB *tsidb, struct TsiInfo *tsi);
 };
@@ -73,7 +73,8 @@ struct TsiYinDB {
   int  (*RecordNumber)(struct TsiYinDB *tsidb);
   int  (*Put)(struct TsiYinDB *tsidb, struct TsiYinInfo *tsiyin);
   int  (*Get)(struct TsiYinDB *tsidb, struct TsiYinInfo *tsiyin);
-  int  (*CursorSet)(struct TsiYinDB *tsidb, struct TsiYinInfo *tsiyin);
+  int  (*CursorSet)(struct TsiYinDB *tsidb, struct TsiYinInfo *tsiyin,
+		    int set_range);
   int  (*CursorNext)(struct TsiYinDB *tsidb, struct TsiYinInfo *tsiyin);
   int  (*CursorPrev)(struct TsiYinDB *tsidb, struct TsiYinInfo *tsiyin);
 };
@@ -83,11 +84,12 @@ enum {
   DB_TYPE_LAST
 };
 
-#define DB_FLAG_OVERWRITE 0x01
-#define DB_FLAG_CREATEDB  0x02
-#define DB_FLAG_READONLY  0x04
-#define DB_FLAG_NOSYNC	  0x08
-#define DB_FLAG_SHARED    0x10
+#define DB_FLAG_OVERWRITE	0x01
+#define DB_FLAG_CREATEDB	0x02
+#define DB_FLAG_READONLY	0x04
+#define DB_FLAG_NOSYNC		0x08
+#define DB_FLAG_SHARED		0x10
+#define DB_FLAG_NOUNPACK_YIN	0x20
 
 struct TsiDB       *tabeTsiDBOpen(int type, const char *db_name, int flags);
 

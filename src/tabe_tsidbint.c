@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tabe_tsidbint.c,v 1.4 2001/10/14 11:32:25 thhsieh Exp $
+ * $Id: tabe_tsidbint.c,v 1.5 2001/10/15 16:17:52 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -29,7 +29,8 @@ static void tabeTsiDBClose(struct TsiDB *tsidb);
 static int  tabeTsiDBRecordNumber(struct TsiDB *tsidb);
 static int  tabeTsiDBStoreTsi(struct TsiDB *tsidb, struct TsiInfo *tsi);
 static int  tabeTsiDBLookupTsi(struct TsiDB *tsidb, struct TsiInfo *tsi);
-static int  tabeTsiDBCursorSet(struct TsiDB *tsidb, struct TsiInfo *tsi);
+static int  tabeTsiDBCursorSet(struct TsiDB *tsidb, struct TsiInfo *tsi,
+			       int set_range);
 static int  tabeTsiDBCursorNext(struct TsiDB *tsidb, struct TsiInfo *tsi);
 static int  tabeTsiDBCursorPrev(struct TsiDB *tsidb, struct TsiInfo *tsi);
 
@@ -52,7 +53,7 @@ struct _tabe_ref_DBpool {
 static int  TsiDBStoreTsiDB(struct TsiDB *tsidb, struct TsiInfo *tsi);
 static int  TsiDBLookupTsiDB(struct TsiDB *tsidb, struct TsiInfo *tsi);
 static void TsiDBPackDataDB(struct TsiInfo *tsi, DBT *dat);
-static void TsiDBUnpackDataDB(struct TsiInfo *tsi, DBT *dat);
+static void TsiDBUnpackDataDB(struct TsiInfo *tsi, DBT *dat, int unpack_yin);
 
 /*
  * open a TsiDB with the given type and name
@@ -351,7 +352,7 @@ TsiDBPackDataDB(struct TsiInfo *tsi, DBT *dat)
 }
 
 static void
-TsiDBUnpackDataDB(struct TsiInfo *tsi, DBT *dat)
+TsiDBUnpackDataDB(struct TsiInfo *tsi, DBT *dat, int unpack_yin)
 {
   int i, yinlen;
   struct TsiDBDataDB d;
@@ -360,8 +361,10 @@ TsiDBUnpackDataDB(struct TsiInfo *tsi, DBT *dat)
   memcpy(&d, dat->data, sizeof(struct TsiDBDataDB));
   /* convert to system byte order */
   tsi->refcount = ntohl(d.refcount);
-  tsi->yinnum   = ntohl(d.yinnum);
-  yinlen        = tsi->yinnum*(strlen((char *)tsi->tsi)/2);
+  if (! unpack_yin)
+    return;
+  tsi->yinnum = ntohl(d.yinnum);
+  yinlen      = tsi->yinnum*(strlen((char *)tsi->tsi)/2);
 
   if (tsi->yindata) {
     free(tsi->yindata);
@@ -476,13 +479,13 @@ TsiDBLookupTsiDB(struct TsiDB *tsidb, struct TsiInfo *tsi)
     }
   }
 
-  TsiDBUnpackDataDB(tsi, &dat);
+  TsiDBUnpackDataDB(tsi, &dat, !(tsidb->flags & DB_FLAG_NOUNPACK_YIN));
 
   return(0);
 }
 
 static int
-tabeTsiDBCursorSet(struct TsiDB *tsidb, struct TsiInfo *tsi)
+tabeTsiDBCursorSet(struct TsiDB *tsidb, struct TsiInfo *tsi, int set_range)
 {
   DB  *dbp;
   DBC *dbcp;
@@ -511,7 +514,15 @@ tabeTsiDBCursorSet(struct TsiDB *tsidb, struct TsiInfo *tsi)
   if (strlen((char *)tsi->tsi)) {
     key.data = tsi->tsi;
     key.size = strlen((char *)tsi->tsi);
-    errno = dbcp->c_get(dbcp, &key, &dat, DB_SET);
+    if (set_range) {
+      errno = dbcp->c_get(dbcp, &key, &dat, DB_SET_RANGE);
+
+     /* we depends on the caller to allocate buffer large enough */
+      *((char *)tsi->tsi) = '\0';
+      strncat((char *)tsi->tsi, (char *)key.data, key.size);
+    }
+    else
+      errno = dbcp->c_get(dbcp, &key, &dat, DB_SET);
   }
   else {
     errno = dbcp->c_get(dbcp, &key, &dat, DB_FIRST);
@@ -532,7 +543,7 @@ tabeTsiDBCursorSet(struct TsiDB *tsidb, struct TsiInfo *tsi)
   /* we depends on the caller to allocate enough large buffer */
   *((char *)tsi->tsi) = '\0';
   strncat((char *)tsi->tsi, (char *)key.data, key.size);
-  TsiDBUnpackDataDB(tsi, &dat);  
+  TsiDBUnpackDataDB(tsi, &dat, !(tsidb->flags & DB_FLAG_NOUNPACK_YIN));
 
   return(0);
 }
@@ -567,7 +578,7 @@ tabeTsiDBCursorNext(struct TsiDB *tsidb, struct TsiInfo *tsi)
   *((char *)tsi->tsi) = '\0';
   strncat((char *)tsi->tsi, (char *)key.data, key.size);
 
-  TsiDBUnpackDataDB(tsi, &dat);
+  TsiDBUnpackDataDB(tsi, &dat, !(tsidb->flags & DB_FLAG_NOUNPACK_YIN));
 
   return(0);
 }
@@ -602,7 +613,7 @@ tabeTsiDBCursorPrev(struct TsiDB *tsidb, struct TsiInfo *tsi)
   *((char *)tsi->tsi) = '\0';
   strncat((char *)tsi->tsi, (char *)key.data, key.size);
 
-  TsiDBUnpackDataDB(tsi, &dat);
+  TsiDBUnpackDataDB(tsi, &dat, !(tsidb->flags & DB_FLAG_NOUNPACK_YIN));
 
   return(0);
 }

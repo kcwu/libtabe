@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tabe_tsiyindbint.c,v 1.5 2001/10/14 11:32:25 thhsieh Exp $
+ * $Id: tabe_tsiyindbint.c,v 1.6 2001/10/15 16:17:52 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -32,7 +32,7 @@ static int  tabeTsiYinDBStoreTsiYin(struct TsiYinDB *tsiyindb,
 static int  tabeTsiYinDBLookupTsiYin(struct TsiYinDB *tsiyindb,
 				     struct TsiYinInfo *tsiyin);
 static int  tabeTsiYinDBCursorSet(struct TsiYinDB *tsiyindb,
-				  struct TsiYinInfo *tsiyin);
+				  struct TsiYinInfo *tsiyin, int set_range);
 static int  tabeTsiYinDBCursorNext(struct TsiYinDB *tsiyindb,
 				   struct TsiYinInfo *tsiyin);
 static int  tabeTsiYinDBCursorPrev(struct TsiYinDB *tsiyindb,
@@ -463,7 +463,8 @@ TsiYinDBLookupTsiYinDB(struct TsiYinDB *tsiyindb, struct TsiYinInfo *tsiyin)
 }
 
 static int
-tabeTsiYinDBCursorSet(struct TsiYinDB *tsiyindb, struct TsiYinInfo *tsiyin)
+tabeTsiYinDBCursorSet(struct TsiYinDB *tsiyindb, struct TsiYinInfo *tsiyin,
+		      int set_range)
 {
   DB  *dbp;
   DBC *dbcp;
@@ -492,7 +493,18 @@ tabeTsiYinDBCursorSet(struct TsiYinDB *tsiyindb, struct TsiYinInfo *tsiyin)
   if (tsiyin->yinlen) {
     key.data = tsiyin->yin;
     key.size = tsiyin->yinlen * sizeof(Yin);
-    errno = dbcp->c_get(dbcp, &key, &dat, DB_SET);
+    if (set_range) {
+      errno = dbcp->c_get(dbcp, &key, &dat, DB_SET_RANGE);
+
+      if (tsiyin->yin) {
+	free(tsiyin->yin);
+	tsiyin->yin = (Yin *)NULL;
+      }
+      tsiyin->yin = (Yin *)malloc(key.size);
+      memcpy(tsiyin->yin, key.data, key.size);
+    }
+    else
+      errno = dbcp->c_get(dbcp, &key, &dat, DB_SET);
   }
   else {
     errno = dbcp->c_get(dbcp, &key, &dat, DB_FIRST);
