@@ -2,7 +2,7 @@
 # Copyright 1999, TaBE Project, All Rights Reserved.
 # Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
 #
-# $Id: Makefile.in,v 1.4 2001/12/16 04:09:12 thhsieh Exp $
+# $Id: Makefile.in,v 1.5 2001/12/19 15:18:35 thhsieh Exp $
 #
 CC              = @CC@
 CFLAGS          = @CFLAGS@
@@ -55,9 +55,13 @@ CHK	=	tsiyincheck
 CHKSRC	=	tsiyincheck.c
 CHKOBJ	=	tsiyincheck.o
 
+GUESS    =	tsiguess
+GUESSSRC =	tsiguess.c
+GUESSOBJ =	tsiguess.o
+
 PACKDB  =	tsipackdb
 
-all: $(DUMP) $(DEL) $(ADD) $(CHK) $(TY)
+all: $(DUMP) $(DEL) $(ADD) $(CHK) $(TY) $(GUESS)
 	if [ ! -x $(PACKDB) ]; then chmod 755 $(PACKDB); fi
 
 .c.o:
@@ -78,17 +82,22 @@ $(CHK): $(CHKOBJ)
 $(TY): $(TYOBJ)
 	$(LIBTOOL) --mode=link $(CC) $(CFLAGS) $(INC) $(DEFS) -o $(TY) $(TYOBJ) $(LDFLAGS)
 
+$(GUESS): $(GUESSOBJ)
+	$(LIBTOOL) --mode=link $(CC) $(CFLAGS) $(INC) $(DEFS) -o $(GUESS) $(GUESSOBJ) $(LDFLAGS)
+
 .PHONY: install clean distclean
-install: $(DUMP) $(DEL) $(ADD) $(CHK) $(TY)
+install: $(DUMP) $(DEL) $(ADD) $(CHK) $(TY) $(GUESS)
 	if [ ! -d $(bindir) ]; then $(INSTALL) -d $(bindir); fi
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(DUMP) $(bindir)
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(DEL) $(bindir)
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(ADD) $(bindir)
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(CHK) $(bindir)
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(TY) $(bindir)
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(GUESS) $(bindir)
 
 clean:
 	$(RM) $(DUMP) $(DUMPOBJ) $(DEL) $(DELOBJ) $(ADD) $(ADDOBJ) \
-		$(CHK) $(CHKOBJ) $(TY) $(TYOBJ) *~ core .libs
+		$(CHK) $(CHKOBJ) $(TY) $(TYOBJ) $(GUESS) $(GUESSOBJ) \
+		*~ core .libs
 distclean: clean
 	$(RM) $(PACKDB) Makefile .depend
