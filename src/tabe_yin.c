@@ -3,7 +3,7 @@
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  * Copyright 1999, Yung-Ching Hsiao, All Rights Reserved.
  *
- * $Id: tabe_yin.c,v 1.2 2001/09/20 00:30:23 thhsieh Exp $
+ * $Id: tabe_yin.c,v 1.3 2001/12/02 14:42:51 thhsieh Exp $
  *
  */
 
@@ -36,8 +36,23 @@ static int yzt_threshold = 0;
 int
 tabeTsiInfoLookupZhiYin(struct TsiDB *tsidb, struct TsiInfo *z)
 {
-  z->tsi[2] = '\0';
-  return tsidb->Get(tsidb, z);
+  struct TsiInfo zh;
+  unsigned char buf[5];
+  int r;
+
+  buf[0] = z->tsi[0];
+  buf[1] = z->tsi[1];
+  buf[2] = '\0';
+  zh.tsi = buf;
+  zh.refcount = 0;
+  zh.yinnum = 0;
+  zh.yindata = NULL;
+  if ((r = tsidb->Get(tsidb, &zh)) == 0) {
+    z->refcount = zh.refcount;
+    z->yinnum = zh.yinnum;
+    z->yindata = zh.yindata;
+  }
+  return r;
 }
 
 /*

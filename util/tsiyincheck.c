@@ -3,7 +3,7 @@
  *
  * Contributed by Kuang-che Wu <kcwu@ck.tp.edu.tw>
  *
- * $Id: tsiyincheck.c,v 1.3 2001/10/16 00:44:43 thhsieh Exp $
+ * $Id: tsiyincheck.c,v 1.4 2001/12/02 14:42:55 thhsieh Exp $
  */
 #include <stdio.h>
 #include <string.h>
@@ -14,7 +14,7 @@
 void usage(void)
 {
   printf(
-      "Usage: tsiyincheck -d <TsiDB> -y <YinDB> [-f input file]\n"
+      "Usage: tsiyincheck -d <TsiDB> -y <YinDB> [-f output file]\n"
       "   -d <TsiDB>      \t path to TsiDB\n"
       "   -y <YinDB>      \t path to YinDB\n"
       "   -f <output file>\t output file (default: stdout)\n"

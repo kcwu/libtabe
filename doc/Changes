@@ -1,4 +1,4 @@
-0.2.5: 2001/
+0.2.5: 2001/12/02
 ---------------------
 1. Fix bug in bims.c: et26: t+space.
    Thansk to Huang, Jiun-Jeng <jouston@housediy.com>.
@@ -20,6 +20,9 @@
    Thanks to Eric Cheng <eric@fractal.myip.org>.
 
 7. Change the .db dir from $(prefix)/share/tabe/tsiyin to $(prefix)/lib/tabe/.
+
+8. Fix bug in tabe_yin.c: tabeTsiInfoLookupZhiYin(): Don't modify the content
+   of input "struct TsiInfo".
    
 
 0.2.4: 2001/10/19
