@@ -32,7 +32,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: bims.c,v 1.6 2001/09/20 00:30:24 thhsieh Exp $
+ * $Id: bims.c,v 1.7 2001/09/22 10:52:06 thhsieh Exp $
  */
 #ifdef HAVE_CONFIG_H
 #include "../../../config.h"
@@ -128,7 +128,11 @@ bimsDestroy(void)
   ydb = NULL;
 
   /* close all other databases, if any */
-  for (i = 0; i < len_pool; i++) {
+  if (len_pool > 0) {
+    tdb_pool[0] = NULL;
+    ydb_pool[0] = NULL;
+  }
+  for (i = 1; i < len_pool; i++) {
     if (tdb_pool[i]) {
       (tdb_pool[i])->Close(tdb_pool[i]);
       tdb_pool[i] = NULL;
