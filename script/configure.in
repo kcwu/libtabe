@@ -168,14 +168,14 @@ else
 	USE_DB=DB2
     else
         AC_MSG_RESULT([You need Berkeley DB2 or DB3 to compile libtabe.])
-        AC_MSG_RESULT([Please use --with-dblib to configure.])
+        AC_MSG_RESULT([Please use --with-db-lib to configure.])
         exit 1
     fi
 fi
 
 AC_CHECK_HEADERS(db.h, ,
     [ AC_MSG_RESULT([db.h is not available.])
-      AC_MSG_RESULT([Please use --with-dbinc to configure.])
+      AC_MSG_RESULT([Please use --with-db-inc to configure.])
       exit 1 ])
 
 if test x$with_db_lib = x; then

@@ -5428,7 +5428,7 @@ EOF
 	USE_DB=DB2
     else
         echo "$ac_t""You need Berkeley DB2 or DB3 to compile libtabe." 1>&6
-        echo "$ac_t""Please use --with-dblib to configure." 1>&6
+        echo "$ac_t""Please use --with-db-lib to configure." 1>&6
         exit 1
     fi
 fi
@@ -5471,7 +5471,7 @@ EOF
 else
   echo "$ac_t""no" 1>&6
 echo "$ac_t""db.h is not available." 1>&6
-      echo "$ac_t""Please use --with-dbinc to configure." 1>&6
+      echo "$ac_t""Please use --with-db-inc to configure." 1>&6
       exit 1 
 fi
 done
