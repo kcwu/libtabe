@@ -4,7 +4,7 @@
  * Copyright 1999, Chih-Hao Tsai, All Rights Reserved.
  * Copyright 1999, Shian-Hua Lin, All Rights Reserved.
  *
- * $Id: tabe_tsi.c,v 1.5 2001/12/18 15:40:51 thhsieh Exp $
+ * $Id: tabe_tsi.c,v 1.6 2001/12/18 16:55:40 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -536,12 +536,7 @@ tabeChunkSegmentationBackward(struct TsiDB *tsidb, struct ChunkInfo *chunk)
       tsi.tsi = buf;
       strncpy((char *)buf, (char *)chunk->chunk+(tsitail-tsilen), tsilen);
       buf[tsilen] = (unsigned char)NULL;
-      if (tsilen == 2) { /* we assume signle-character a word */
-	rval = 0;
-      }
-      else {
-	rval = tsidb->Get(tsidb, &tsi);
-      }
+      rval = tsidb->Get(tsidb, &tsi);
       if (!rval) {
 	chunk->tsi = (struct TsiInfo *)
 	  realloc(chunk->tsi, sizeof(struct TsiInfo)*(chunk->num_tsi+1));
