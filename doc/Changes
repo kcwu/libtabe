@@ -6,6 +6,10 @@
 2. Fix bug in tabe_tsidbint.c & tabe_tsiyindbint.c when open db file failed.
    Turn off the writing mode of bims when opening the db files.
    Thanks to Kuang-che Wu <kcwu@ck.tp.edu.tw>.
+
+3. Fix bug in bims.c: bimsContextDP(): counting for maxcount mistake for
+   not exact precision for the double precision "max_double".
+   Thanks to Kuang-che Wu, EricSYCheng.
    
 
 0.2.4: 2001/10/19

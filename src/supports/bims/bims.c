@@ -32,7 +32,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: bims.c,v 1.12 2001/11/04 16:48:11 thhsieh Exp $
+ * $Id: bims.c,v 1.13 2001/11/05 15:23:39 thhsieh Exp $
  */
 #ifdef HAVE_CONFIG_H
 #include "../../../config.h"
@@ -857,6 +857,7 @@ bimsVerifyPindown(struct bimsContext *bc, struct TsiYinInfo *ty,
 struct smart_com {
   int    s1, s2, s3;
   int    len;           /* maximum matching */
+  int    mark;		/* this element is marked to be choosed. */
   double avg_word_len;  /* largest average word length */
   double smallest_var;  /* smallest variance of word length */
   double largest_sum;   /* the sum of frequency */
@@ -1017,6 +1018,7 @@ bimsContextDP(struct _db_pool *_db, struct bimsContext *bc)
 	  comb[ncomb].s2 = yinhead+i;
 	  comb[ncomb].s3 = yinhead+i+j;
 	  comb[ncomb].len = i+j+k;
+	  comb[ncomb].mark = 0;
 	  comb[ncomb].avg_word_len = 0;
 	  comb[ncomb].smallest_var = 0;
 	  comb[ncomb].largest_sum = 0;
@@ -1034,18 +1036,21 @@ bimsContextDP(struct _db_pool *_db, struct bimsContext *bc)
 	index = i;
 	max_int = comb[i].len;
 	maxcount = 1;
+	comb[i].mark = max_int;
       }
       else if (comb[i].len == max_int) {
         maxcount++;
+	comb[i].mark = max_int;
       }
     }
     ncand = 0;
     cand = (int *)malloc(sizeof(int)*maxcount);
     for (i = 0; i < ncomb; i++) {
-      if (comb[i].len == max_int) {
+      if (comb[i].mark == max_int) {
 	cand[ncand] = i;
 	ncand++;
       }
+      comb[i].mark = 0;
     }
 
     /* resolved by rule 1 */
@@ -1056,6 +1061,7 @@ bimsContextDP(struct _db_pool *_db, struct bimsContext *bc)
       /* rule 2: largest average word length */
       max_double = 0;
       maxcount = 0;
+      max_int = 0;
       for (i = 0; i < ncand; i++) {
 	index = cand[i];
 	comb[index].avg_word_len = 0;
@@ -1080,9 +1086,12 @@ bimsContextDP(struct _db_pool *_db, struct bimsContext *bc)
 	if (comb[index].avg_word_len > max_double) {
 	  max_double = comb[index].avg_word_len;
 	  maxcount = 1;
+	  max_int ++;
+	  comb[index].mark = max_int;
 	}
 	else if (comb[index].avg_word_len == max_double) {
 	  maxcount++;
+	  comb[index].mark = max_int;
 	}
       }
 
@@ -1090,10 +1099,11 @@ bimsContextDP(struct _db_pool *_db, struct bimsContext *bc)
       tmpcand = (int *)malloc(sizeof(int)*maxcount);
       for (i = 0; i < ncand; i++) {
 	index = cand[i];
-	if (comb[index].avg_word_len == max_double) {
+	if (comb[index].mark == max_int) {
 	  tmpcand[tmpncand] = index;
 	  tmpncand++;
 	}
+	comb[index].mark = 0;
       }
 
       ncand = tmpncand;
@@ -1109,6 +1119,7 @@ bimsContextDP(struct _db_pool *_db, struct bimsContext *bc)
 	/* rule 3: smallest variance of word length */
 	max_double = 1000; /* this is misleading */
 	maxcount = 0;
+	max_int = 0;
 	for (i = 0; i < ncand; i++) {
 	  index = cand[i];
 	  comb[index].smallest_var = 0;
@@ -1122,14 +1133,21 @@ bimsContextDP(struct _db_pool *_db, struct bimsContext *bc)
 	  k = (comb[index].len+comb[index].s1-comb[index].s3) -
 	    (comb[index].s2-comb[index].s1);
 	  comb[index].smallest_var += abs(k);
-	  
-	  comb[index].smallest_var /= 3;
+/*
+ *  Note: Don't trust the precision of "smallest_var" here. !!!!
+ *	  by T.H.Hsieh
+ *
+ *	  comb[index].smallest_var /= 3;
+ */
 	  if (comb[index].smallest_var < max_double) {
 	    max_double = comb[index].smallest_var;
 	    maxcount = 1;
+	    max_int ++;
+	    comb[index].mark = max_int;
 	  }
 	  else if (comb[index].smallest_var == max_double) {
 	    maxcount++;
+	    comb[index].mark = max_int;
 	  }
 	}
 	
@@ -1137,10 +1155,11 @@ bimsContextDP(struct _db_pool *_db, struct bimsContext *bc)
 	tmpcand = (int *)malloc(sizeof(int)*maxcount);
 	for (i = 0; i < ncand; i++) {
 	  index = cand[i];
-	  if (comb[index].smallest_var == max_double) {
+	  if (comb[index].mark == max_int) {
 	    tmpcand[tmpncand] = index;
 	    tmpncand++;
 	  }
+	  comb[index].mark = 0;
 	}
 	
 	ncand = tmpncand;
@@ -1157,6 +1176,7 @@ bimsContextDP(struct _db_pool *_db, struct bimsContext *bc)
 	  /* rule 4: largest sum of tsi ref count */
 	  max_double = 0;
 	  maxcount = 0;
+	  max_int = 0;
 	  for (i = 0; i < ncand; i++) {
 	    index = cand[i];
 	    comb[index].largest_sum = 0;
@@ -1227,9 +1247,12 @@ bimsContextDP(struct _db_pool *_db, struct bimsContext *bc)
 	    if (comb[index].largest_sum > max_double) {
 	      max_double = comb[index].largest_sum;
 	      maxcount = 1;
+	      max_int ++;
+	      comb[index].mark = max_int;
 	    }
 	    else if (comb[index].largest_sum == max_double) {
 	      maxcount++;
+	      comb[index].mark = max_int;
 	    }
 	  }
 	  
@@ -1237,10 +1260,11 @@ bimsContextDP(struct _db_pool *_db, struct bimsContext *bc)
 	  tmpcand = (int *)malloc(sizeof(int)*maxcount);
 	  for (i = 0; i < ncand; i++) {
 	    index = cand[i];
-	    if (comb[index].largest_sum == max_double) {
+	    if (comb[index].mark == max_int) {
 	      tmpcand[tmpncand] = index;
 	      tmpncand++;
 	    }
+	    comb[index].mark = 0;
 	  }
 	  
 	  ncand = tmpncand;
