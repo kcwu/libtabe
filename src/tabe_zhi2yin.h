@@ -9,7 +9,7 @@
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  * Copyright 1999, Yung-Ching Hsiao, All Rights Reserved.
  *
- * $Id: tabe_zhi2yin.h,v 1.3 2001/05/16 16:29:01 thhsieh Exp $
+ * $Id: tabe_zhi2yin.h,v 1.4 2001/07/02 14:37:35 thhsieh Exp $
  *
  */
 
@@ -1891,7 +1891,7 @@ static Yin _yinlistAFBD[] = {  8712,                      };
 static Yin _yinlistAFBE[] = {   338,                      };
 static Yin _yinlistAFBF[] = {   340,                      };
 static Yin _yinlistAFC0[] = { 11012,                      };
-static Yin _yinlistAFC1[] = { 11027,                      };
+static Yin _yinlistAFC1[] = { 11026, 11027,               };
 static Yin _yinlistAFC2[] = {  8530,                      };
 static Yin _yinlistAFC3[] = {  3779,                      };
 static Yin _yinlistAFC4[] = { 17536, 17538,               };

@@ -8,7 +8,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tabe_yin2zhi.h,v 1.3 2001/05/16 16:29:00 thhsieh Exp $
+ * $Id: tabe_yin2zhi.h,v 1.4 2001/07/02 14:37:35 thhsieh Exp $
  *
  */
 
@@ -7369,6 +7369,10 @@ static ZhiCode codelist11024[] = {
  0xd5c4, 0xf0f7, 0xd761, 0xe456, 0xe1da,
 };
 
+static ZhiCode codelist11026[] = {
+ 0xafc1,
+};
+
 static ZhiCode codelist11027[] = {
  0xa9d2, 0xafc1, 0xc2ea, 0xbabe, 0xe6a8,
  0xdcd4, 0xe1e2, 0xf163, 0xf540,
@@ -8752,6 +8756,7 @@ struct YinZhi _YinZhiTable[] = {
   {   11010,   1, codelist11010 },
   {   11012,  42, codelist11012 },
   {   11024,  15, codelist11024 },
+  {   11026,   1, codelist11026 },
   {   11027,   9, codelist11027 },
   {   11028,   1, codelist11028 },
   {   11056,  12, codelist11056 },

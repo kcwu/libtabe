@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: bims.c,v 1.3 2001/01/10 16:44:30 thhsieh Exp $
+ * $Id: bims.c,v 1.4 2001/07/02 14:37:40 thhsieh Exp $
  */
 #ifdef HAVE_CONFIG_H
 #include "../../../config.h"
@@ -1382,8 +1382,12 @@ bimsPindownByNumber(unsigned long int bcid, int sel)
   }
   if (i != bc->yinlen)
     bc->tsiboundary[i] = 1;
-  if (bc->yinpos != 0)
-    bc->tsiboundary[bc->yinpos] = 1;
+  if (bc->yinpos != 0) {
+    if (bc->yinpos == bc->yinlen)
+       bc->tsiboundary[bc->yinpos-1] = 1;
+    else
+       bc->tsiboundary[bc->yinpos] = 1;
+  }
   bimsContextSmartEdit(bc);
 
   return(0);
