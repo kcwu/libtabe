@@ -32,7 +32,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: bims.c,v 1.19 2002/08/11 01:43:43 kcwu Exp $
+ * $Id: bims.c,v 1.20 2002/08/14 11:09:45 kcwu Exp $
  */
 #ifdef HAVE_CONFIG_H
 #include "../../../config.h"
@@ -609,7 +609,7 @@ bimsTsiDBPoolSearch(struct _db_pool *_db, struct TsiInfo *ti)
       if (_db->tdb_pool && _db->tdb_pool[i]) {
 	rval = (_db->tdb_pool[i])->Get(_db->tdb_pool[i], ti);
 	if (rval == 0) {
-	  found = 0;
+	  found = 1;
 	  tmp.refcount += ti->refcount;
 	}
       }
