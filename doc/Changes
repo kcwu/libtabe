@@ -13,6 +13,9 @@
 
 5. Add new Yin "¯Á: £ª£¹£¬2" into tabe_yin2zhi.h and tabe_zhi2yin.h.
 
+6. Add "extra_link_flag" for NetBSD in configure.in.
+   Thanks to Rui-Xiang Guo <rxg@ms25.url.com.tw>.
+
 
 0.2.2:  2001/06/07
 ---------------------

@@ -136,6 +136,7 @@ AC_MSG_RESULT([checking for install -d: $INSTALL])
 dnl-----------------------------------------------------------------------
 dnl Checks for host type
 dnl-----------------------------------------------------------------------
+extra_link_flag=
 case "$host_os" in
     linux*)  
 	AC_DEFINE(LINUX)
@@ -145,6 +146,7 @@ case "$host_os" in
         ;;
     openbsd*)
 	AC_DEFINE(OPENBSD)
+	extra_link_flag='-Wl,-R'
         ;;
     netbsd*)
 	AC_DEFINE(NETBSD)
@@ -168,6 +170,9 @@ fi
 if test ! x$db_library = x; then
     db_library="-L$db_library"
     LDFLAGS="$LDFLAGS $db_library"
+    if test x$extra_link_flag != x; then
+	LDFLAGS="$LDFLAGS $extra_link_flag$db_library"
+    fi
 fi
 
 for f in db db2; do
