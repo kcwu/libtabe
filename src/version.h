@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: version.h,v 1.2 2001/08/20 03:53:03 thhsieh Exp $
+ * $Id: version.h,v 1.3 2001/10/19 14:21:21 thhsieh Exp $
  *
  */
 
@@ -12,7 +12,7 @@
  * Update this number for every new release of libtabe.
  */
 
-#define RELEASE_VER	0.2.3
+#define RELEASE_VER	0.2.4
 
 /*
  * Internal interface numbers (quotted from `info libtool')
@@ -37,7 +37,7 @@
  *      then set AGE to 0.
  */
 
-#define CURRENT_VER	1
+#define CURRENT_VER	2
 #define REVISION_VER	0
-#define AGE_VER		1
+#define AGE_VER		2
 
