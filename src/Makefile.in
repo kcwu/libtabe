@@ -2,7 +2,7 @@
 # Copyright 1999, TaBE Project, All Rights Reserved.
 # Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
 #
-# $Id: Makefile.in,v 1.1 2000/12/09 09:14:09 thhsieh Exp $
+# $Id: Makefile.in,v 1.2 2001/01/03 06:51:14 thhsieh Exp $
 #
 CC              = @CC@
 CFLAGS          = @CFLAGS@
@@ -29,7 +29,7 @@ libdir	    = @libdir@
 bindir	    = @bindir@
 includedir  = @includedir@
 
-version	    = 0.2.0
+version	    = 0.2.1
 major_ver   = 0.2
 
 #

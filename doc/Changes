@@ -1,4 +1,4 @@
-0.2.1:  2000/12/
+0.2.1:  2001/01/03
 ---------------------
 1. tsiadd.c: Add comment phrasing for tsi.src.
 
@@ -6,9 +6,9 @@
    Thanks to Kuang-che Wu <kcwu@camel.ck.tp.edu.tw>.
 
 3. tsi.src update:
-   a. ZhuYin filled: 1-4000, 5501-7000.
-   b. Remove 139 un-useful tsi's.
-   c. Add 16 new tsi's
+   a. ZhuYin filled: 1-14000, 15001-19000.
+   b. Remove several un-useful tsi's.
+   c. Add 301 new tsi's
 
 
 0.2:  2000/11/30
