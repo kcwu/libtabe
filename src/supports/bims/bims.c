@@ -32,7 +32,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: bims.c,v 1.18 2002/08/05 12:32:49 informer Exp $
+ * $Id: bims.c,v 1.19 2002/08/11 01:43:43 kcwu Exp $
  */
 #ifdef HAVE_CONFIG_H
 #include "../../../config.h"
@@ -601,24 +601,20 @@ bimsTsiDBPoolSearch(struct _db_pool *_db, struct TsiInfo *ti)
   }
   else {
 #ifdef TSI_UNION_RESULTS
+    int found = 0;
     /* initialize the data structure */
     memset(&tmp, 0, sizeof(tmp));
-    tmp.refcount = -1;
 
     for (i = 0; i < _db->len_pool; i++) {
       if (_db->tdb_pool && _db->tdb_pool[i]) {
 	rval = (_db->tdb_pool[i])->Get(_db->tdb_pool[i], ti);
 	if (rval == 0) {
-	  if (tmp.refcount < 0) {
-	    tmp.refcount = ti->refcount;
-	  }
-	  else {
-	    tmp.refcount += ti->refcount;
-	  }
+	  found = 0;
+	  tmp.refcount += ti->refcount;
 	}
       }
     }
-    if (tmp.refcount >= 0) {
+    if (found) {
       ti->refcount = tmp.refcount;
       return (0);
     }
@@ -3250,11 +3246,9 @@ bimsTsiyinDump(struct TsiDB *db, struct TsiYinDB *ydb)
 	fprintf(stderr, "bimsTsiyinDump: wrong DB format.\n");
     }
 
+    memset(&tsi, 0, sizeof(struct TsiInfo));
     tsi.tsi = (ZhiStr)str;
     memset(tsi.tsi, 0, 80);
-    tsi.refcount = -1;
-    tsi.yinnum = -1;
-    tsi.yindata = (Yin *)NULL;
     memset(&tsiyin, 0, sizeof(struct TsiYinInfo));
 
     i = 0;

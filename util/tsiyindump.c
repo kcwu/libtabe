@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tsiyindump.c,v 1.5 2001/12/04 15:05:20 thhsieh Exp $
+ * $Id: tsiyindump.c,v 1.6 2002/08/11 01:43:43 kcwu Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -45,11 +45,9 @@ dump(struct TsiDB *db, struct TsiYinDB *ydb)
   }
 
   tsi = (struct TsiInfo *)malloc(sizeof(struct TsiInfo));
+  memset(tsi, 0, sizeof(struct TsiInfo));
   tsi->tsi = (ZhiStr)malloc(sizeof(unsigned char)*80);
   memset(tsi->tsi, 0, 80);
-  tsi->refcount = -1;
-  tsi->yinnum = -1;
-  tsi->yindata = (Yin *)NULL;
 
   tsiyin = (struct TsiYinInfo *)malloc(sizeof(struct TsiYinInfo));
   memset(tsiyin, 0, sizeof(struct TsiYinInfo));
