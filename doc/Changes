@@ -43,6 +43,10 @@
     Speed up and clean up tsiguess.c and tabe_tsi.c
     By Kuang-che Wu <kcwu@ck.tp.edu.tw>
 
+12. Set DB_FLAG_READONLY or DB_FLAG_NOUNPACK_YIN flags in 
+    tsidump, tsiguess, tsiyincheck, tsiyindump utilities when necessary.
+    By Kuang-che Wu <kcwu@ck.tp.edu.tw>
+
 0.2.5: 2001/12/02
 ---------------------
 1. Fix bug in bims.c: et26: t+space.

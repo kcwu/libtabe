@@ -3,7 +3,7 @@
  *
  * Contributed by Kuang-che Wu <kcwu@ck.tp.edu.tw>
  *
- * $Id: tsiyincheck.c,v 1.5 2001/12/04 15:05:20 thhsieh Exp $
+ * $Id: tsiyincheck.c,v 1.6 2003/05/13 10:01:07 kcwu Exp $
  */
 #ifdef HAVE_CONFIG_H
 #include "../config.h"
@@ -261,8 +261,8 @@ int main(int argc, char *argv[])
 
   if(!db_name || !yindb_name)
     usage();
-  db = tabeTsiDBOpen(DB_TYPE_DB, db_name, 0);
-  yindb = tabeTsiYinDBOpen(DB_TYPE_DB, yindb_name, 0);
+  db = tabeTsiDBOpen(DB_TYPE_DB, db_name, DB_FLAG_READONLY);
+  yindb = tabeTsiYinDBOpen(DB_TYPE_DB, yindb_name, DB_FLAG_READONLY);
   if (!yindb || !db) 
     usage();
 
