@@ -1,7 +1,7 @@
 /*
  * Copyright 2001, TaBE Project, All Rights Reserved.
  * 
- * $Id: tsiguess.c,v 1.3 2002/08/07 10:02:27 informer Exp $  
+ * $Id: tsiguess.c,v 1.4 2002/12/10 02:36:56 thhsieh Exp $  
  * 
  */
 #include <stdio.h>
@@ -38,6 +38,7 @@ usage(void)
 	printf("tsiguess: libtabe-%s\n", RELEASE_VER);
 	printf("Usage: tsiguess -d <TsiDB> \n");
 	printf("   -d <TsiDB>     \t path to TsiDB\n");
+	printf("   -u <TsiDB>     \t path to user's TsiDB\n");
 	exit(0);
 }
 
@@ -198,7 +199,9 @@ tabe_guess_newtsi (struct ChunkInfo *chunk,
 	struct TsiInfo *tsi;		
         char buf[1024]="";
 	
-	strcpy(return_str,"");
+	if (newdb == NULL)
+		return 0;
+	return_str[0] = '\0';
 
         for (i=0; i < chunk->num_tsi ; i++) {
 		tsi_str = (chunk->tsi+i)->tsi ;
@@ -244,17 +247,20 @@ main(int argc, char **argv)
 	extern char *optarg;
 	extern int optind, opterr, optopt; 
 
-	struct TsiDB     *tsidb;
+	struct TsiDB     *tsidb = NULL;
 	char             *tsidb_name = NULL;
-	struct TsiDB	 *newdb;
-	char             newdb_name[1024]="";
-	struct ChunkInfo *chunk; 
+	struct TsiDB	 *newdb = NULL;
+	char             *usrdb_name = NULL;
+	struct ChunkInfo *chunk = NULL; 
 	unsigned char    *str;
 
-	while ((ch = getopt(argc, argv, "d:")) != -1) {
+	while ((ch = getopt(argc, argv, "d:u:")) != -1) {
     		switch(ch) {
       			case 'd':
         			tsidb_name = (char *)strdup(optarg);
+        			break;
+      			case 'u':
+        			usrdb_name = (char *)strdup(optarg);
         			break;
 			default:
 				usage();
@@ -274,10 +280,10 @@ main(int argc, char **argv)
   		usage();
 	}
 
-	strcat ( newdb_name, getenv("HOME") );
-	strcat ( newdb_name, "/.xcin/new.db" );
-	newdb = tabeTsiDBOpen(DB_TYPE_DB, newdb_name, 
+	if (usrdb_name) {
+		newdb = tabeTsiDBOpen(DB_TYPE_DB, usrdb_name, 
 			      DB_FLAG_CREATEDB|DB_FLAG_OVERWRITE);
+	}
 
 	str = (unsigned char *) malloc(sizeof(unsigned char) * 1024 );
 
@@ -285,7 +291,8 @@ main(int argc, char **argv)
         	if ( (chunk = tabeChunkInfoGet(stdin)) != NULL ) { 
 			tabeChunkSegmentationComplex(tsidb,chunk);
 			tabeChunkInfoShow(chunk);
-			tabe_guess_newtsi(chunk, str, newdb);
+			if (newdb)
+				tabe_guess_newtsi(chunk, str, newdb);
 			
 			if ( strlen(str) > 0 ) {
 				printf( "<<·sµü: %s>>", str); 
@@ -297,6 +304,7 @@ main(int argc, char **argv)
 	printf("\n");
 
 	tsidb->Close(tsidb);
-	newdb->Close(newdb);
+	if (newdb)
+		newdb->Close(newdb);
 	return 0;	
 }
