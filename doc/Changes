@@ -1,4 +1,4 @@
-0.2.4: 2001/09/
+0.2.4: 2001/10/19
 ---------------------
 1. Complete the ZhuYin filling project of tsi.src.
 
@@ -32,6 +32,9 @@
 7. Change libtabe API:
 	struct TsiDB, TsiYinDB: add set_range support for CursorSet.
 	Add flag: DB_FLAG_NOUNPACK_YIN, only effective for struct TsiDB.
+
+8. Change "which" to "whereis" in tsipackdb.in for NetBSD compatibility.
+	Thanks to Rui-Xiang Guo <rxg@ms25.url.com.tw>
 
 
 0.2.3: 2001/08/20
