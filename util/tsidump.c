@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tsidump.c,v 1.5 2003/05/06 18:54:35 kcwu Exp $
+ * $Id: tsidump.c,v 1.6 2003/05/11 07:25:25 kcwu Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -139,7 +139,7 @@ extern int optind, opterr, optopt;
   }
 
   db = tabeTsiDBOpen(DB_TYPE_DB, db_name, 
-      tsiyin?DB_FLAG_READONLY|DB_FLAG_NOUNPACK_YIN:DB_FLAG_READONLY);
+      tsiyin?DB_FLAG_READONLY:DB_FLAG_READONLY|DB_FLAG_NOUNPACK_YIN);
   if (!db) {
     usage();
   }
