@@ -32,7 +32,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: bims.h,v 1.6 2001/09/23 15:44:41 thhsieh Exp $
+ * $Id: bims.h,v 1.7 2001/12/31 16:05:41 thhsieh Exp $
  *
  */
 #ifndef __BIMS_H__
@@ -121,7 +121,7 @@ void                bimsFreeBC (unsigned long int bcid);
 int                 bimsDBPoolAppend(DB_pool db, char *tsidb, char *yindb);
 int                 bimsDBPoolPrepend(DB_pool db, char *tsidb, char *yindb);
 int                 bimsDBPoolDelete(DB_pool db, char *tsidb, char *yindb);
-
+int		    bimsUserDBAppend(DB_pool db, char *usertsidb, char *useryindb);
 int                 bimsFeedKey(DB_pool db, unsigned long int bcid, KeySym key);
 
 /*
@@ -172,6 +172,9 @@ unsigned char      *bimsQueryLastZuYinString(unsigned long int bcid);
 int                 bimsQuerySelectionNumber(unsigned long int bcid);
 unsigned char     **bimsQuerySelectionText  (unsigned long int bcid);
 int                 bimsQuerySelectionBase  (unsigned long int bcid);
+
+void		    bimsUserTsiEval	    (DB_pool db, struct TsiInfo* tsi,
+					     struct TsiYinInfo* ty); 
 
 /* bims to tabe operations */
 unsigned char      *bimstabeZhiToYin        (DB_pool db, struct TsiInfo *zhi);

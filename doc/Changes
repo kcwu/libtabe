@@ -20,6 +20,9 @@
 	    tabeTsiInfoFree().
    Thanks to Pofeng Lee <informer@ns1.m2000.idv.tw>.
 
+6. Add bims facility: user add Tsi by hand and store to user DB files.
+   Thanks to Eric Cheng <eric@fractal.myip.org>.
+
 
 0.2.5: 2001/12/02
 ---------------------

@@ -32,7 +32,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: bims.c,v 1.14 2001/12/16 16:46:08 thhsieh Exp $
+ * $Id: bims.c,v 1.15 2001/12/31 16:05:41 thhsieh Exp $
  */
 #ifdef HAVE_CONFIG_H
 #include "../../../config.h"
@@ -55,6 +55,9 @@ struct _db_pool {
   int               len_pool;
 };
 
+struct TsiDB	*usertsidb;
+struct TsiYinDB	*useryindb;
+
 static int bimsTsiDBPoolSearch(struct _db_pool *_db, struct TsiInfo *ti);
 static int bimsTsiYinDBPoolSearch(struct _db_pool *_db, struct TsiYinInfo *ty);
 
@@ -68,6 +71,8 @@ static int  bimsVerifyPindown(struct bimsContext *bc,
 			      struct TsiYinInfo *ty, int yinoff, int index);
 
 static void bimsContextSmartEdit(struct _db_pool *_db, struct bimsContext *bc);
+static void bimsTsiyinDump(struct TsiDB *db, struct TsiYinDB *ydb);
+
 
 static ZuYinIndex bimsZozyKeyToZuYinIndex(int key);
 static ZuYinIndex bimsEtenKeyToZuYinIndex(int key);
@@ -130,6 +135,7 @@ bimsInit(char *tsidb_name, char *yindb_name)
   _db->tdb_pool = NULL;
   _db->ydb_pool = NULL;
   _db->len_pool = 0;
+
   return (DB_pool)_db;
 }
 
@@ -159,6 +165,79 @@ bimsDestroy(DB_pool db)
     free(_db->ydb_pool);
   }
   free(_db);
+}
+
+
+int 
+bimsUserDBAppend(DB_pool db, char *usertsidb_name, char *useryindb_name)
+{
+    struct _db_pool *_db = (struct _db_pool *)db;
+    struct TsiDB *t;
+    struct TsiYinDB *y;
+    int len = 0;
+
+    /* check and open database */
+    if (! _db || !strlen(usertsidb_name) || !strlen(useryindb_name) )
+	return(-1);
+
+    t = tabeTsiDBOpen(DB_TYPE_DB, usertsidb_name,
+			DB_FLAG_OVERWRITE|DB_FLAG_CREATEDB|DB_FLAG_SHARED);
+    if (!t) {
+	return(-1);
+    }
+    usertsidb = t;
+
+    y = tabeTsiYinDBOpen(DB_TYPE_DB, useryindb_name,
+			DB_FLAG_OVERWRITE|DB_FLAG_CREATEDB|DB_FLAG_SHARED);
+    if (!y) {
+	t->Close(t);
+	return(-1);
+    }
+    useryindb = y;
+
+    /* append them to the pool */
+    if (_db->len_pool == 0) {
+	len = 2;  /* the primary plus this new one */
+	_db->tdb_pool = (struct TsiDB **)calloc(len, sizeof(struct TsiDB *));
+	_db->ydb_pool = (struct TsiYinDB **)calloc(len, sizeof(struct TsiYinDB *));
+
+	if (!_db->tdb_pool || !_db->ydb_pool) {
+	    t->Close(t);
+	    y->Close(y);
+	    return (-1);
+	}
+
+	/* put primary in */
+	_db->tdb_pool[0] = _db->tdb;
+	_db->ydb_pool[0] = _db->ydb;
+	/* append the new one */
+	_db->tdb_pool[1] = t;
+	_db->ydb_pool[1] = y;
+    }
+    else {
+	void *tmp;
+	len = _db->len_pool + 1;  /* the primary plus this new one */
+	tmp = (void *)realloc(_db->tdb_pool, len*sizeof(struct TsiDB *));
+	if (!tmp) {
+	    t->Close(t);
+	    y->Close(y);
+	    return (-1);
+	}
+	_db->tdb_pool = (struct TsiDB **)tmp;
+	tmp = (void *)realloc(_db->ydb_pool, len*sizeof(struct TsiYinDB *));
+	if (!tmp) {
+	    t->Close(t);
+	    y->Close(y);
+	    return (-1);
+	}
+	_db->ydb_pool = (struct TsiYinDB **)tmp;
+
+	/* append the new one */
+	_db->tdb_pool[_db->len_pool] = t;
+	_db->ydb_pool[_db->len_pool] = y;
+    }
+    _db->len_pool = len;
+    return (0);
 }
 
 /*
@@ -2926,6 +3005,50 @@ bimsHsuZuYinContextInput(struct ZuYinContext *zc, int index)
 }
 
 /*
+ * Check whether the specified tsi exists and add it to the user's database.
+ */
+
+void         
+bimsUserTsiEval(DB_pool db, struct TsiInfo *tsi, struct TsiYinInfo *ty)
+{
+    struct _db_pool *_db = (struct _db_pool *)db;
+    int rval;
+    int i;
+    int found=0;
+
+    /* Lookup the user-specified Tsi in the DB pool */
+    rval = bimsTsiYinDBPoolSearch(_db, ty); 
+
+    /* Check for Tsi which has identical Yin and Zhi */
+    for(i=0; i < ty->tsinum; i++){
+	if(strncmp(ty->tsidata+i*ty->yinlen*2, tsi->tsi, ty->yinlen*2)==0){
+	    found=1; 
+	    break;
+	}
+    }
+    if (found)
+	return;
+    else {
+	int r;
+
+	tsi->refcount++;
+	tsi->yinnum++;
+
+	/* 32 should be more than adequate */
+	tsi->yindata = (Yin*)realloc(tsi->yindata, sizeof(Yin)*32);
+
+	memcpy(tsi->yindata+(tsi->yinnum-1)*ty->yinlen, ty->yin,
+		sizeof(Yin)*ty->yinlen);
+
+	/* Add a new entry in user's database */
+	r = usertsidb->Put(usertsidb, tsi);
+
+	/* Update user's TsiYinDB */
+	bimsTsiyinDump(usertsidb, useryindb);
+    }
+}
+
+/*
  *  bims to tabe operation interfaces.
  */
 unsigned char *
@@ -2953,4 +3076,85 @@ bimstabeZhiToYin(DB_pool db, struct TsiInfo *zhi)
     }
   }
   return zhuyin;
+}
+
+
+/*
+ *  Stolen from tsiyindump.c from utils for dumping user's Tsi to
+ *  user's Yin DB.
+ */
+static void
+bimsTsiyinDump(struct TsiDB *db, struct TsiYinDB *ydb)
+{
+    struct TsiInfo tsi;
+    struct TsiYinInfo tsiyin;
+    unsigned char str[80];
+    int rval, i, j, len;
+
+    rval = db->RecordNumber(db);
+    if (rval < 0) {
+	fprintf(stderr, "bimsTsiyinDump: wrong DB format.\n");
+    }
+
+    tsi.tsi = (ZhiStr)str;
+    memset(tsi.tsi, 0, 80);
+    tsi.refcount = -1;
+    tsi.yinnum = -1;
+    tsi.yindata = (Yin *)NULL;
+    memset(&tsiyin, 0, sizeof(struct TsiYinInfo));
+
+    i = 0;
+    while (1) {
+	if (i == 0)
+	    db->CursorSet(db, &tsi, 0);
+	else {
+	    rval = db->CursorNext(db, &tsi);
+	    if (rval < 0) 
+		break;
+	}
+	i++;
+
+	if (!tsi.yinnum) {
+	    tabeTsiInfoLookupPossibleTsiYin(db, &tsi);
+	}
+	len = strlen((char *)tsi.tsi)/2;
+	for (j=0; j < tsi.yinnum; j++) {
+	    tsiyin.yinlen = len;
+	    tsiyin.yin = (Yin *)malloc(sizeof(Yin)*len);
+	    memcpy(tsiyin.yin, tsi.yindata+j*len, sizeof(Yin)*len);
+	    rval = ydb->Get(ydb, &tsiyin);
+	    if (rval < 0) { /* no such tsiyin */
+		tsiyin.tsinum = 1;
+		tsiyin.tsidata = (ZhiStr)malloc(sizeof(unsigned char)*len*2);
+		memcpy(tsiyin.tsidata, tsi.tsi, sizeof(unsigned char)*len*2);
+		ydb->Put(ydb, &tsiyin);
+	    }
+	    else {
+		int k, found=0;
+		for (k=0; k<tsiyin.tsinum; k++) {
+		    if (strncmp(tsiyin.tsidata+k*len*2, tsi.tsi, len*2)==0) {
+			found = 1;
+			break;
+		    }
+		}
+		if (found == 0) {
+		    tsiyin.tsidata = (ZhiStr)realloc(tsiyin.tsidata,
+			sizeof(unsigned char)*((tsiyin.tsinum+1)*len*2));
+		    memcpy(tsiyin.tsidata+(tsiyin.tsinum*len*2), tsi.tsi,
+			sizeof(unsigned char)*len*2);
+		    tsiyin.tsinum++;
+		    ydb->Put(ydb, &tsiyin);
+		}
+	    }
+	    free(tsiyin.yin);
+	    if (tsiyin.tsidata) {
+		free(tsiyin.tsidata);
+		tsiyin.tsidata = NULL;
+	    }
+	}
+	if (tsi.yindata) {
+	    free(tsi.yindata);
+	    tsi.yindata = NULL;
+	}
+    }
 }
