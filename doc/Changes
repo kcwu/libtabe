@@ -16,6 +16,8 @@
 6. Add "extra_link_flag" for NetBSD in configure.in.
    Thanks to Rui-Xiang Guo <rxg@ms25.url.com.tw>.
 
+7. Remove Xlib checking from configure.in.
+
 
 0.2.2:  2001/06/07
 ---------------------

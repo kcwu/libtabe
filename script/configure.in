@@ -168,11 +168,12 @@ if test ! x$db_include = x; then
     CPP="$CPP $db_include"
 fi
 if test ! x$db_library = x; then
-    db_library="-L$db_library"
-    LDFLAGS="$LDFLAGS $db_library"
     if test x$extra_link_flag != x; then
-	LDFLAGS="$LDFLAGS $extra_link_flag$db_library"
+	db_library="-L$db_library $extra_link_flag$db_library"
+    else
+	db_library="-L$db_library"
     fi
+    LDFLAGS="$LDFLAGS $db_library"
 fi
 
 for f in db db2; do
@@ -209,17 +210,15 @@ dnl-----------------------------------------------------------------------
 dnl Checks for X11R6 library
 dnl-----------------------------------------------------------------------
 AC_PATH_X
-if test ! x$x_libraries = x; then
-    LDFLAGS="$LDFLAGS -L$x_libraries"
+if test x$x_includes = x; then
+    AC_MSG_RESULT([You need X11R6 header files to compile libtabe.])
+    AC_MSG_RESULT([Please use --x-includes to configure.])
+    exit 1
 fi
-AC_CHECK_LIB(X11, XOpenDisplay, ,
-    [ AC_MSG_RESULT([You need X11R6 to compile xcin.])
-      AC_MSG_RESULT([Please use --x-includes and --x-libraries to configure.])
-      exit 1 ])
 
 AC_SUBST(x_includes)
 AC_SUBST(x_libraries)
-LDFLAGS="$LDFLAGS -L$x_libraries"
+dnl LDFLAGS="$LDFLAGS -L$x_libraries"
 
 dnl-----------------------------------------------------------------------
 dnl Checks for header files.
