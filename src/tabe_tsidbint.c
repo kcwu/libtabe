@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tabe_tsidbint.c,v 1.2 2001/08/20 03:53:03 thhsieh Exp $
+ * $Id: tabe_tsidbint.c,v 1.3 2001/09/23 15:44:40 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -165,6 +165,9 @@ tabeTsiDBClose(struct TsiDB *tsidb)
       dbp->close(dbp, 0);
       dbp = (void *)NULL;
     }
+    if (tsidb->db_name)
+      free(tsidb->db_name);
+    free(tsidb);
     return;
   default:
     fprintf(stderr, "tabeTsiDBClose(): Unknown DB type.\n");

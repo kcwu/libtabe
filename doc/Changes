@@ -16,8 +16,14 @@
 	Change API: tabeTsiInfoLookupPossibleTsiYin().
    Modify bims.c, tsiadd.c, tsiyindump.c, tsiyincheck.c for the API change.
 
-4. Add libbims new API:
-	bimsReturnDBPool().
+4. Change libbims API:
+	Add bimstabeZhiToYin().
+	Add type: DB_pool, to hold the db files for each application.
+
+5. Fix the bugs which might hurt the consistancy:
+	bimsDBPoolDelete() should also check the primary tdb, ydb.
+	tabeTsiDBClose() should free tsidb also.
+	tabeTsiYinDBClose() should free tsiyindb also.
 
 
 0.2.3: 2001/08/20

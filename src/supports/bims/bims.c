@@ -32,7 +32,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: bims.c,v 1.8 2001/09/22 13:05:53 thhsieh Exp $
+ * $Id: bims.c,v 1.9 2001/09/23 15:44:41 thhsieh Exp $
  */
 #ifdef HAVE_CONFIG_H
 #include "../../../config.h"
@@ -44,17 +44,19 @@
 
 #include "bims.h"
 
+struct _db_pool {
 /* primary tsi and tsiyin database */
-static struct TsiDB    *tdb = (struct TsiDB *)NULL;
-static struct TsiYinDB *ydb = (struct TsiYinDB *)NULL;
+  struct TsiDB     *tdb;
+  struct TsiYinDB  *ydb;
 
 /* allow the use of multiple database */
-static struct TsiDB    **tdb_pool = (struct TsiDB **)NULL;
-static struct TsiYinDB **ydb_pool = (struct TsiYinDB **)NULL;
-static int               len_pool = 0;
+  struct TsiDB    **tdb_pool;
+  struct TsiYinDB **ydb_pool;
+  int               len_pool;
+};
 
-static int bimsTsiDBPoolSearch(struct TsiInfo *ti);
-static int bimsTsiYinDBPoolSearch(struct TsiYinInfo *ty);
+static int bimsTsiDBPoolSearch(struct _db_pool *_db, struct TsiInfo *ti);
+static int bimsTsiYinDBPoolSearch(struct _db_pool *_db, struct TsiYinInfo *ty);
 
 static int  bimsZuYinContextCheck(struct ZuYinContext *zc);
 static int  bimsZuYinContextInput(struct ZuYinContext *zc, int index);
@@ -65,7 +67,7 @@ static void bimsZuYinContextClear(struct ZuYinContext *zc);
 static int  bimsVerifyPindown(struct bimsContext *bc,
 			      struct TsiYinInfo *ty, int yinoff, int index);
 
-static void bimsContextSmartEdit(struct bimsContext *bc);
+static void bimsContextSmartEdit(struct _db_pool *_db, struct bimsContext *bc);
 
 static ZuYinIndex bimsZozyKeyToZuYinIndex(int key);
 static ZuYinIndex bimsEtenKeyToZuYinIndex(int key);
@@ -81,85 +83,91 @@ static ZuYinIndex bimsHsuKeyToZuYinIndex(int key);
  *
  * tdb and ydb must be non-zero throughout the system.
  */
-int
+DB_pool
 bimsInit(char *tsidb_name, char *yindb_name)
 {
+  struct _db_pool *_db;
+  struct TsiDB *tdb;
+  struct TsiYinDB *ydb; 
+
   if (!tsidb_name || !yindb_name) {
-    return(-1);
+    return(NULL);
   }
 
+  tdb = tabeTsiDBOpen(DB_TYPE_DB, tsidb_name, DB_FLAG_OVERWRITE);
+  /* fallback to readonly mode */
   if (!tdb) {
-    tdb = tabeTsiDBOpen(DB_TYPE_DB, tsidb_name, DB_FLAG_OVERWRITE);
-    /* fallback to readonly mode */
-    if (!tdb) {
-      tdb = tabeTsiDBOpen(DB_TYPE_DB, tsidb_name, DB_FLAG_READONLY);
-    }
-    if (!tdb) {
-      return(-1);
-    }
+    tdb = tabeTsiDBOpen(DB_TYPE_DB, tsidb_name, DB_FLAG_READONLY);
+  }
+  if (!tdb) {
+    return(NULL);
+  }
+
+  ydb = tabeTsiYinDBOpen(DB_TYPE_DB, yindb_name, DB_FLAG_OVERWRITE);
+  /* fallback to readonly mode */
+  if (!ydb) {
+    ydb = tabeTsiYinDBOpen(DB_TYPE_DB, yindb_name, DB_FLAG_READONLY);
   }
   if (!ydb) {
-    ydb = tabeTsiYinDBOpen(DB_TYPE_DB, yindb_name, DB_FLAG_OVERWRITE);
-    /* fallback to readonly mode */
-    if (!ydb) {
-      ydb = tabeTsiYinDBOpen(DB_TYPE_DB, yindb_name, DB_FLAG_READONLY);
-    }
-    if (!ydb) {
-      tdb->Close(tdb);
-      return(-1);
-    }
+    tdb->Close(tdb);
+    return(NULL);
   }
 
-  return(0);
+  _db = malloc(sizeof(struct _db_pool));
+  if (!_db) {
+    tdb->Close(tdb);
+    ydb->Close(ydb);
+    return(NULL);
+  }
+  _db->tdb = tdb;
+  _db->ydb = ydb;
+  _db->tdb_pool = NULL;
+  _db->ydb_pool = NULL;
+  _db->len_pool = 0;
+  return (DB_pool)_db;
 }
 
 /*
  * destroy the bims subsystem
  */
 void
-bimsDestroy(void)
+bimsDestroy(DB_pool db)
 {
   int i;
+  struct _db_pool *_db = (struct _db_pool *)db;
 
   /* close all the databases, if any */
-  for (i = 0; i < len_pool; i++) {
-    if (tdb_pool[i]) {
-      (tdb_pool[i])->Close(tdb_pool[i]);
-      tdb_pool[i] = NULL;
-    }
-    if (ydb_pool[i]) {
-      (ydb_pool[i])->Close(ydb_pool[i]);
-      ydb_pool[i] = NULL;
-    }
+  for (i = 0; i < _db->len_pool; i++) {
+    if (_db->tdb_pool[i])
+      (_db->tdb_pool[i])->Close(_db->tdb_pool[i]);
+    if (_db->ydb_pool[i])
+      (_db->ydb_pool[i])->Close(_db->ydb_pool[i]);
   }
   /* close the primary database if haven't down */
-  if (len_pool == 0) {
-    tdb->Close(tdb);
-    ydb->Close(ydb);
+  if (_db->len_pool == 0) {
+    _db->tdb->Close(_db->tdb);
+    _db->ydb->Close(_db->ydb);
   }
   else {
-    free(tdb_pool);
-    tdb_pool = NULL;
-    free(ydb_pool);
-    ydb_pool = NULL;
-    len_pool = 0;
+    free(_db->tdb_pool);
+    free(_db->ydb_pool);
   }
-  tdb = NULL;
-  ydb = NULL;
+  free(_db);
 }
 
 /*
  * Append a pair of tsi and tsiyin db into the pool
  */
 int
-bimsDBPoolAppend(char *tsidb_name, char *yindb_name)
+bimsDBPoolAppend(DB_pool db, char *tsidb_name, char *yindb_name)
 {
+  struct _db_pool *_db = (struct _db_pool *)db;
   struct TsiDB *t;
   struct TsiYinDB *y;
   int len = 0;
 
   /* check and open both database */
-  if (!tsidb_name || !yindb_name) {
+  if (! _db || !tsidb_name || !yindb_name) {
     return(-1);
   }
 
@@ -175,49 +183,49 @@ bimsDBPoolAppend(char *tsidb_name, char *yindb_name)
   }
 
   /* append them to the pool */
-  if (len_pool == 0) {
+  if (_db->len_pool == 0) {
     len = 2;  /* the primary plus this new one */
-    tdb_pool = (struct TsiDB **)calloc(len, sizeof(struct TsiDB *));
-    ydb_pool = (struct TsiYinDB **)calloc(len, sizeof(struct TsiYinDB *));
+    _db->tdb_pool = (struct TsiDB **)calloc(len, sizeof(struct TsiDB *));
+    _db->ydb_pool = (struct TsiYinDB **)calloc(len, sizeof(struct TsiYinDB *));
 
-    if (!tdb_pool || !ydb_pool) {
+    if (!_db->tdb_pool || !_db->ydb_pool) {
       t->Close(t);
       y->Close(y);
       return (-1);
     }
 
     /* put primary in */
-    tdb_pool[0] = tdb;
-    ydb_pool[0] = ydb;
+    _db->tdb_pool[0] = _db->tdb;
+    _db->ydb_pool[0] = _db->ydb;
     /* append the new one */
-    tdb_pool[1] = t;
-    ydb_pool[1] = y;
+    _db->tdb_pool[1] = t;
+    _db->ydb_pool[1] = y;
   }
   else {
     void *tmp;
 
-    len = len_pool + 1;  /* the primary plus this new one */
-    tmp = (void *)realloc(tdb_pool, len*sizeof(struct TsiDB *));
+    len = _db->len_pool + 1;  /* the primary plus this new one */
+    tmp = (void *)realloc(_db->tdb_pool, len*sizeof(struct TsiDB *));
     if (!tmp) {
       t->Close(t);
       y->Close(y);
       return (-1);
     }
-    tdb_pool = (struct TsiDB **)tmp;
-    tmp = (void *)realloc(ydb_pool, len*sizeof(struct TsiYinDB *));
+    _db->tdb_pool = (struct TsiDB **)tmp;
+    tmp = (void *)realloc(_db->ydb_pool, len*sizeof(struct TsiYinDB *));
     if (!tmp) {
       t->Close(t);
       y->Close(y);
       return (-1);
     }
-    ydb_pool = (struct TsiYinDB **)tmp;
+    _db->ydb_pool = (struct TsiYinDB **)tmp;
 
     /* append the new one */
-    tdb_pool[len_pool] = t;
-    ydb_pool[len_pool] = y;
+    _db->tdb_pool[_db->len_pool] = t;
+    _db->ydb_pool[_db->len_pool] = y;
   }
 
-  len_pool = len;
+  _db->len_pool = len;
 
   return (0);
 }
@@ -226,14 +234,15 @@ bimsDBPoolAppend(char *tsidb_name, char *yindb_name)
  * Prepend a pair of tsi and tsiyin db into the pool
  */
 int
-bimsDBPoolPrepend(char *tsidb_name, char *yindb_name)
+bimsDBPoolPrepend(DB_pool db, char *tsidb_name, char *yindb_name)
 {
+  struct _db_pool *_db = (struct _db_pool *)db;
   struct TsiDB *t;
   struct TsiYinDB *y;
   int len = 0;
 
   /* check and open both database */
-  if (!tsidb_name || !yindb_name) {
+  if (!db || !tsidb_name || !yindb_name) {
     return(-1);
   }
 
@@ -249,29 +258,29 @@ bimsDBPoolPrepend(char *tsidb_name, char *yindb_name)
   }
 
   /* prepend them to the pool */
-  if (len_pool == 0) {
+  if (_db->len_pool == 0) {
     len = 2;  /* the primary plus this new one */
-    tdb_pool = (struct TsiDB **)calloc(len, sizeof(struct TsiDB *));
-    ydb_pool = (struct TsiYinDB **)calloc(len, sizeof(struct TsiYinDB *));
+    _db->tdb_pool = (struct TsiDB **)calloc(len, sizeof(struct TsiDB *));
+    _db->ydb_pool = (struct TsiYinDB **)calloc(len, sizeof(struct TsiYinDB *));
 
-    if (!tdb_pool || !ydb_pool) {
+    if (!_db->tdb_pool || !_db->ydb_pool) {
       t->Close(t);
       y->Close(y);
       return (-1);
     }
 
     /* put primary in */
-    tdb_pool[1] = tdb;
-    ydb_pool[1] = ydb;
+    _db->tdb_pool[1] = _db->tdb;
+    _db->ydb_pool[1] = _db->ydb;
     /* prepend the new one */
-    tdb_pool[0] = t;
-    ydb_pool[0] = y;
+    _db->tdb_pool[0] = t;
+    _db->ydb_pool[0] = y;
   }
   else {
     char *tmp;
 
-    len = len_pool + 1;  /* the primary plus this new one */
-    tmp = (char *)realloc(tdb_pool, len*sizeof(struct TsiDB *));
+    len = _db->len_pool + 1;  /* the primary plus this new one */
+    tmp = (char *)realloc(_db->tdb_pool, len*sizeof(struct TsiDB *));
     if (!tmp) {
       t->Close(t);
       y->Close(y);
@@ -279,22 +288,22 @@ bimsDBPoolPrepend(char *tsidb_name, char *yindb_name)
     }
 
     /* memmove is not destructive */
-    memmove(tmp+sizeof(struct TsiDB *), tmp, len_pool*sizeof(struct TsiDB *));
-    tdb_pool = (struct TsiDB **)tmp;
-    tmp = (void *)realloc(ydb_pool, len*sizeof(struct TsiYinDB *));
+    memmove(tmp+sizeof(struct TsiDB *), tmp, _db->len_pool*sizeof(struct TsiDB *));
+    _db->tdb_pool = (struct TsiDB **)tmp;
+    tmp = (void *)realloc(_db->ydb_pool, len*sizeof(struct TsiYinDB *));
     if (!tmp) {
       t->Close(t);
       y->Close(y);
       return (-1);
     }
-    ydb_pool = (struct TsiYinDB **)tmp;
+    _db->ydb_pool = (struct TsiYinDB **)tmp;
 
     /* prepend the new one */
-    tdb_pool[0] = t;
-    ydb_pool[0] = y;
+    _db->tdb_pool[0] = t;
+    _db->ydb_pool[0] = y;
   }
 
-  len_pool = len;
+  _db->len_pool = len;
 
   return (0);
 }
@@ -306,36 +315,37 @@ bimsDBPoolPrepend(char *tsidb_name, char *yindb_name)
  * become invalid.
  */
 int
-bimsDBPoolDelete(char *tsidb_name, char *yindb_name)
+bimsDBPoolDelete(DB_pool db, char *tsidb_name, char *yindb_name)
 {
+  struct _db_pool *_db = (struct _db_pool *)db;
   int i, j, rval;
 
   rval = 0;
-  if (len_pool == 0) {
+  if (_db->len_pool == 0) {
     return (0);
   }
 
-  for (i = 0; i < len_pool; i++) {
-    if (tdb_pool && tdb_pool[i]) {
-      if (!strcmp(tdb_pool[i]->db_name, tsidb_name)) {
-	if (tdb_pool[i] == tdb)
-	  tdb = NULL;
-	tdb_pool[i]->Close(tdb_pool[i]);
+  for (i = 0; i < _db->len_pool; i++) {
+    if (_db->tdb_pool && _db->tdb_pool[i]) {
+      if (!strcmp(_db->tdb_pool[i]->db_name, tsidb_name)) {
+	if (_db->tdb_pool[i] == _db->tdb)
+	  _db->tdb = NULL;
+	_db->tdb_pool[i]->Close(_db->tdb_pool[i]);
 	/* only remove the first one found */
-	tdb_pool[i] = NULL;
+	_db->tdb_pool[i] = NULL;
 	break;
       }
     }
   }
 
-  for (j = 0; j < len_pool; j++) {
-    if (ydb_pool && ydb_pool[j]) {
-      if (!strcmp(ydb_pool[j]->db_name, yindb_name)) {
-	if (ydb_pool[i] == ydb)
-	  ydb = NULL;
-	ydb_pool[j]->Close(ydb_pool[j]);
+  for (j = 0; j < _db->len_pool; j++) {
+    if (_db->ydb_pool && _db->ydb_pool[j]) {
+      if (!strcmp(_db->ydb_pool[j]->db_name, yindb_name)) {
+	if (_db->ydb_pool[i] == _db->ydb)
+	  _db->ydb = NULL;
+	_db->ydb_pool[j]->Close(_db->ydb_pool[j]);
 	/* only remove the first one found */
-	ydb_pool[j] = NULL;
+	_db->ydb_pool[j] = NULL;
 	break;
       }
     }
@@ -346,32 +356,6 @@ bimsDBPoolDelete(char *tsidb_name, char *yindb_name)
   }
 
   return (rval);
-}
-
-int
-bimsReturnDBPool(struct TsiDB ***tsidb, struct TsiYinDB ***yindb)
-{
-  int i, cnt=0;
-
-  if (len_pool > 0) {
-    *tsidb = malloc(sizeof(struct TsiDB **) * len_pool);
-    *yindb = malloc(sizeof(struct TsiYinDB **) * len_pool);
-    for (i=0; i<len_pool; i++) {
-      if (tdb_pool[i] != NULL && ydb_pool[i] != NULL) {
-        *tsidb[cnt] = tdb_pool[i];
-        *yindb[cnt] = ydb_pool[i];
-        cnt ++;
-      }
-    }
-  }
-  else if (tdb != NULL && ydb != NULL) {
-    *tsidb = malloc(sizeof(struct TsiDB **));
-    *yindb = malloc(sizeof(struct TsiYinDB **));
-    *tsidb[0] = tdb;
-    *yindb[0] = ydb;
-    cnt = 1;
-  }
-  return cnt;
 }
 
 /*
@@ -513,7 +497,7 @@ bimsFreeBC(unsigned long int bcid)
  *       union the corresponding yindata is unknown.
  */
 static int
-bimsTsiDBPoolSearch(struct TsiInfo *ti)
+bimsTsiDBPoolSearch(struct _db_pool *_db, struct TsiInfo *ti)
 {
   int rval, i;
 #ifdef TSI_UNION_RESULTS
@@ -522,12 +506,12 @@ bimsTsiDBPoolSearch(struct TsiInfo *ti)
 
   rval = -1;
 
-  if (len_pool == 0 && tdb == NULL) {
+  if (_db->len_pool == 0 && _db->tdb == NULL) {
     return (-1);
   }
 
-  if (len_pool == 0) {
-    rval = tdb->Get(tdb, ti);
+  if (_db->len_pool == 0) {
+    rval = _db->tdb->Get(_db->tdb, ti);
     return (rval);
   }
   else {
@@ -536,9 +520,9 @@ bimsTsiDBPoolSearch(struct TsiInfo *ti)
     memset(&tmp, 0, sizeof(tmp));
     tmp.refcount = -1;
 
-    for (i = 0; i < len_pool; i++) {
-      if (tdb_pool && tdb_pool[i]) {
-	rval = (tdb_pool[i])->Get(tdb_pool[i], ti);
+    for (i = 0; i < _db->len_pool; i++) {
+      if (_db->tdb_pool && _db->tdb_pool[i]) {
+	rval = (_db->tdb_pool[i])->Get(_db->tdb_pool[i], ti);
 	if (rval == 0) {
 	  if (tmp.refcount < 0) {
 	    tmp.refcount = ti->refcount;
@@ -557,9 +541,9 @@ bimsTsiDBPoolSearch(struct TsiInfo *ti)
       return (-1);
     }
 #else
-    for (i = 0; i < len_pool; i++) {
-      if (tdb_pool && tdb_pool[i]) {
-	rval = (tdb_pool[i])->Get(tdb_pool[i], ti);
+    for (i = 0; i < _db->len_pool; i++) {
+      if (_db->tdb_pool && _db->tdb_pool[i]) {
+	rval = (_db->tdb_pool[i])->Get(_db->tdb_pool[i], ti);
 	if (rval == 0) {
           return (rval);
 	}
@@ -579,7 +563,7 @@ bimsTsiDBPoolSearch(struct TsiInfo *ti)
  * from matching entries found in the databases.
  */
 static int
-bimsTsiYinDBPoolSearch(struct TsiYinInfo *ty)
+bimsTsiYinDBPoolSearch(struct _db_pool *_db, struct TsiYinInfo *ty)
 {
   int rval, i;
 #ifdef TSIYIN_UNION_RESULTS
@@ -587,12 +571,12 @@ bimsTsiYinDBPoolSearch(struct TsiYinInfo *ty)
   unsigned char *foo;
 #endif
 
-  if (len_pool == 0 && ydb == NULL) {
+  if (_db->len_pool == 0 && _db->ydb == NULL) {
     return (-1);
   }
 
-  if (len_pool == 0) {
-    rval = ydb->Get(ydb, ty);
+  if (_db->len_pool == 0) {
+    rval = _db->ydb->Get(_db->ydb, ty);
     return (rval);
   }
   else {
@@ -604,9 +588,9 @@ bimsTsiYinDBPoolSearch(struct TsiYinInfo *ty)
     memcpy(tmp.yin, ty->yin, tmp.yinlen*sizeof(Yin));
     tmp.yinlen = ty->yinlen;
 
-    for (i = 0; i < len_pool; i++) {
-      if (ydb_pool && ydb_pool[i]) {
-	rval = (ydb_pool[i])->Get(ydb_pool[i], ty);
+    for (i = 0; i < _db->len_pool; i++) {
+      if (_db->ydb_pool && _db->ydb_pool[i]) {
+	rval = (_db->ydb_pool[i])->Get(_db->ydb_pool[i], ty);
 	if (rval == 0) {
 	  /* got to combine the results */
 	  foo = realloc(tmp.tsidata, (tmp.yinlen*2)*(tmp.tsinum+ty->tsinum));
@@ -631,9 +615,9 @@ bimsTsiYinDBPoolSearch(struct TsiYinInfo *ty)
       return (-1);
     }
 #else
-    for (i = 0; i < len_pool; i++) {
-      if (ydb_pool && ydb_pool[i]) {
-	rval = (ydb_pool[i])->Get(ydb_pool[i], ty);
+    for (i = 0; i < _db->len_pool; i++) {
+      if (_db->ydb_pool && _db->ydb_pool[i]) {
+	rval = (_db->ydb_pool[i])->Get(_db->ydb_pool[i], ty);
 	if (rval == 0) {
 	  return(rval);
 	}
@@ -743,17 +727,18 @@ bimsZuYinContextClear(struct ZuYinContext *zc)
  * return the Zhi if the yin is valid, return NULL otherwise.
  */
 static Zhi
-bimsYinChooseZhi(Yin yin)
+bimsYinChooseZhi(struct _db_pool *_db, Yin yin)
 {
   ZhiStr str, z;
   ZhiCode code;
-  int len, i, idx;
+  int len, i, idx, n_db;
   unsigned long int max, refcount;
   struct TsiInfo zhi;
+  struct TsiDB **t;
   char zhi_buf[5];
   
   str = tabeYinLookupZhiList(yin);
-  if (!tdb && !str) {
+  if (!str) {
     return(NULL);
   }
   len = strlen((char *)str)/2;
@@ -777,12 +762,24 @@ bimsYinChooseZhi(Yin yin)
   }
 
   z = (Zhi)malloc(sizeof(unsigned char)*3);
-  tabeTsiInfoLookupZhiYin(tdb, &zhi);
-  if (zhi.yinnum > 1)			/* zhi has more than one yin */
-    strncpy((char *)z, (char *)str, 2);
-  else
-    strncpy((char *)z, (char *)str+idx*2, 2);
-  z[2] = (unsigned char)NULL;
+  if (_db->len_pool == 0) {
+    t = &(_db->tdb);
+    n_db = 1;
+  }
+  else {
+    t = _db->tdb_pool;
+    n_db = _db->len_pool;
+  }
+  for (i=0; i<n_db; i++) {
+    if (t[i] != NULL && tabeTsiInfoLookupZhiYin(t[i], &zhi) == 0) {
+      if (zhi.yinnum > 1)			/* zhi has more than one yin */
+        strncpy((char *)z, (char *)str, 2);
+      else
+        strncpy((char *)z, (char *)str+idx*2, 2);
+      z[2] = (unsigned char)NULL;
+      break;
+    }
+  }
   if (zhi.yindata)
     free(zhi.yindata);
 
@@ -867,7 +864,7 @@ struct smart_com {
  * other names.
  */
 static int
-bimsContextDP(struct bimsContext *bc)
+bimsContextDP(struct _db_pool *_db, struct bimsContext *bc)
 {
   struct YinSegInfo *ysinfo = (struct YinSegInfo *)NULL;
   int num_ysinfo = 0;
@@ -922,7 +919,7 @@ bimsContextDP(struct bimsContext *bc)
 	memset(&ty, 0, sizeof(ty));
 	ty.yinlen = 2;
 	ty.yin = ysinfo[num_ysinfo-1].yindata;
-	rval = bimsTsiYinDBPoolSearch(&ty);
+	rval = bimsTsiYinDBPoolSearch(_db, &ty);
 	if (!rval) {
 	  /* tsiyin exists, verify if it has pindown character */
  	  if (!bimsVerifyPindown(bc, &ty, yinhead, -1)) {
@@ -954,7 +951,7 @@ bimsContextDP(struct bimsContext *bc)
       ty.yinlen = i;
       memcpy(yin, bc->yin+yinhead, sizeof(Yin)*i);
       ty.yin = yin;
-      rval = bimsTsiYinDBPoolSearch(&ty);
+      rval = bimsTsiYinDBPoolSearch(_db, &ty);
       if (rval < 0) {
 	continue;
       }
@@ -975,7 +972,7 @@ bimsContextDP(struct bimsContext *bc)
 	  ty.yinlen = j;
 	  memcpy(yin, bc->yin+yinhead+i, sizeof(Yin)*j);
 	  ty.yin = yin;
-	  rval = bimsTsiYinDBPoolSearch(&ty);
+	  rval = bimsTsiYinDBPoolSearch(_db, &ty);
 	  if (rval < 0) {
 	    continue;
 	  }
@@ -1000,7 +997,7 @@ bimsContextDP(struct bimsContext *bc)
 	    ty.yinlen = k;
 	    memcpy(yin, bc->yin+yinhead+i+j, sizeof(Yin)*k);
 	    ty.yin = yin;
-	    rval = bimsTsiYinDBPoolSearch(&ty);
+	    rval = bimsTsiYinDBPoolSearch(_db, &ty);
 	    if (rval < 0) {
 	      continue;
 	    }
@@ -1163,14 +1160,14 @@ bimsContextDP(struct bimsContext *bc)
 	      ty.yinlen = k;
 	      memcpy(yin, bc->yin+comb[index].s1, sizeof(Yin)*k);
 	      ty.yin = yin;
-	      rval = bimsTsiYinDBPoolSearch(&ty);
+	      rval = bimsTsiYinDBPoolSearch(_db, &ty);
 	      if (!rval) {
 		max_ref = 0;
 		tsi.tsi[ty.yinlen*2] = (unsigned char)NULL;
 		for (j = 0; j < ty.tsinum; j++) {
 		  strncpy((char *)tsi.tsi, 
 			  (char *)ty.tsidata+(j*ty.yinlen)*2, ty.yinlen*2);
-		  rval = bimsTsiDBPoolSearch(&tsi);
+		  rval = bimsTsiDBPoolSearch(_db, &tsi);
 		  if (tsi.refcount > max_ref) {
 		    max_ref = tsi.refcount;
 		  }
@@ -1184,14 +1181,14 @@ bimsContextDP(struct bimsContext *bc)
 	      ty.yinlen = k;
 	      memcpy(yin, bc->yin+comb[index].s2, sizeof(Yin)*k);
 	      ty.yin = yin;
-	      rval = bimsTsiYinDBPoolSearch(&ty);
+	      rval = bimsTsiYinDBPoolSearch(_db, &ty);
 	      if (!rval) {
 		max_ref = 0;
 		tsi.tsi[ty.yinlen*2] = (unsigned char)NULL;
 		for (j = 0; j < ty.tsinum; j++) {
 		  strncpy((char *)tsi.tsi, 
 			  (char *)ty.tsidata+(j*ty.yinlen)*2, ty.yinlen*2);
-		  rval = bimsTsiDBPoolSearch(&tsi);
+		  rval = bimsTsiDBPoolSearch(_db, &tsi);
 		  if (tsi.refcount > max_ref) {
 		    max_ref = tsi.refcount;
 		  }
@@ -1205,14 +1202,14 @@ bimsContextDP(struct bimsContext *bc)
 	      ty.yinlen = k;
 	      memcpy(yin, bc->yin+comb[index].s3, sizeof(Yin)*k);
 	      ty.yin = yin;
-	      rval = bimsTsiYinDBPoolSearch(&ty);
+	      rval = bimsTsiYinDBPoolSearch(_db, &ty);
 	      if (!rval) {
 		max_ref = 0;
 		tsi.tsi[ty.yinlen*2] = (unsigned char)NULL;
 		for (j = 0; j < ty.tsinum; j++) {
 		  strncpy((char *)tsi.tsi, 
 			  (char *)ty.tsidata+(j*ty.yinlen)*2, ty.yinlen*2);
-		  rval = bimsTsiDBPoolSearch(&tsi);
+		  rval = bimsTsiDBPoolSearch(_db, &tsi);
 		  if (tsi.refcount > max_ref) {
 		    max_ref = tsi.refcount;
 		  }
@@ -1290,7 +1287,7 @@ bimsContextDP(struct bimsContext *bc)
  * this function decides which zhi among available selection is the best
  */
 static void
-bimsContextSmartEdit(struct bimsContext *bc)
+bimsContextSmartEdit(struct _db_pool *_db, struct bimsContext *bc)
 {
   struct YinSegInfo *ysinfo;
   struct TsiYinInfo ty;
@@ -1303,7 +1300,7 @@ bimsContextSmartEdit(struct bimsContext *bc)
   unsigned char tmp[TMP_BUFFER];
   int idebug = 0;
 
-  if (bc->no_smart_ed || (len_pool==0 && (!tdb || !ydb))) {
+  if (bc->no_smart_ed || (_db->len_pool==0 && (!_db->tdb || !_db->ydb))) {
     return;
   }
 
@@ -1318,7 +1315,7 @@ bimsContextSmartEdit(struct bimsContext *bc)
   bc->num_ysinfo = 0;
   bc->ysinfo = (struct YinSegInfo *)NULL;
 
-  num_ysinfo = bimsContextDP(bc);
+  num_ysinfo = bimsContextDP(_db, bc);
   ysinfo = bc->ysinfo;
 
   if (bc->internal_text) {
@@ -1343,7 +1340,7 @@ bimsContextSmartEdit(struct bimsContext *bc)
 	  bc->pindown[ysinfo[i].yinoff] % 256;
       }
       else {
-	z = bimsYinChooseZhi(bc->yin[ysinfo[i].yinoff]);
+	z = bimsYinChooseZhi(_db, bc->yin[ysinfo[i].yinoff]);
 	strncpy((char *)bc->internal_text+2*ysinfo[i].yinoff, (char *)z, 2);
 	free(z);
       }
@@ -1352,7 +1349,7 @@ bimsContextSmartEdit(struct bimsContext *bc)
       memset(&ty, 0, sizeof(ty));
       ty.yinlen = ysinfo[i].yinlen;
       ty.yin = ysinfo[i].yindata;
-      rval = bimsTsiYinDBPoolSearch(&ty);
+      rval = bimsTsiYinDBPoolSearch(_db, &ty);
       if (rval < 0) { /* weird */
 	fprintf(stderr, "Weird I!\n");
       }
@@ -1367,7 +1364,7 @@ bimsContextSmartEdit(struct bimsContext *bc)
 	  }
 	  strncpy((char *)tsi.tsi, 
 		  (char *)ty.tsidata+(j*ty.yinlen)*2, ty.yinlen*2);
-	  rval = bimsTsiDBPoolSearch(&tsi);
+	  rval = bimsTsiDBPoolSearch(_db, &tsi);
 	  if (rval < 0) { /* weird, too */
 	    fprintf(stderr, "Weird II!\n");
 	    continue;
@@ -1415,8 +1412,9 @@ bimsContextSmartEdit(struct bimsContext *bc)
  * BC_VAL_ERROR      error occurs
  */
 int
-bimsFeedKey(unsigned long int bcid, KeySym key)
+bimsFeedKey(DB_pool db, unsigned long int bcid, KeySym key)
 {
+  struct _db_pool *_db = (struct _db_pool *)db;
   struct bimsContext *bc;
   int index, rval;
   int i;
@@ -1491,7 +1489,7 @@ bimsFeedKey(unsigned long int bcid, KeySym key)
 	}
 	bc->yinlen -= 1;
 	bc->yinpos -= 1;
-        bimsContextSmartEdit(bc);
+        bimsContextSmartEdit(_db, bc);
         return(BC_VAL_ABSORB);
       }
     }
@@ -1500,7 +1498,7 @@ bimsFeedKey(unsigned long int bcid, KeySym key)
     if(strlen((char *)bc->zc.string) == 0 && bc->yinlen >0 &&
        bc->yinlen!=bc->yinpos) {
       bc->tsiboundary[bc->yinpos] = (! bc->tsiboundary[bc->yinpos]);
-      bimsContextSmartEdit(bc);
+      bimsContextSmartEdit(_db, bc);
       return(BC_VAL_ABSORB);
     }
     return(BC_VAL_IGNORE);
@@ -1559,7 +1557,7 @@ bimsFeedKey(unsigned long int bcid, KeySym key)
 	if (j>=3 || !buf[j*2]) j=0;
 	bc->pindown[i]=tabeZhiToZhiCode((Zhi)buf+j*2);
 	free(buf);
-        bimsContextSmartEdit(bc);
+        bimsContextSmartEdit(_db, bc);
         return(BC_VAL_ABSORB);
       } 
       else 
@@ -1586,7 +1584,7 @@ bimsFeedKey(unsigned long int bcid, KeySym key)
       bc->yinlen++;
       bc->yinpos++;
       bimsZuYinContextClear(&(bc->zc));
-      bimsContextSmartEdit(bc);
+      bimsContextSmartEdit(_db, bc);
     }
     if (bc->maxlen && bc->yinlen > bc->maxlen) {
       return(BC_VAL_COMMIT);
@@ -1605,15 +1603,16 @@ bimsFeedKey(unsigned long int bcid, KeySym key)
  * toggle into tsi selection mode
  */
 int
-bimsToggleTsiSelection(unsigned long int bcid)
+bimsToggleTsiSelection(DB_pool db, unsigned long int bcid)
 {
+  struct _db_pool *_db = (struct _db_pool *)db;
   struct bimsContext *bc;
   struct TsiYinInfo ty;
   unsigned char **list=NULL, *str;
   int i, j, yl, rval, len=0, num=0, oldlen=0;
 
   bc = bimsGetBC(bcid);
-  if (bc->no_smart_ed || (len_pool==0 && (!tdb || !ydb))) {
+  if (bc->no_smart_ed || (_db->len_pool==0 && (!_db->tdb || !_db->ydb))) {
     return(BC_VAL_IGNORE);
   }
   if (bc->yinlen == 0 || bc->yinpos > bc->yinlen) {
@@ -1634,7 +1633,7 @@ bimsToggleTsiSelection(unsigned long int bcid)
   for (yl = 2; yl < 5 && i+yl <= bc->yinlen; yl++) {
     ty.yinlen = yl;
     ty.yin = &bc->yin[i];
-    rval = bimsTsiYinDBPoolSearch(&ty);
+    rval = bimsTsiYinDBPoolSearch(_db, &ty);
     if (rval) continue;
     if (ty.tsinum) {
       num += ty.tsinum;
@@ -1798,8 +1797,9 @@ bimsToggleNoUpdate(unsigned long int bcid)
  * pindown a Zhi
  */
 int
-bimsPindown(unsigned long int bcid, ZhiCode z)
+bimsPindown(DB_pool db, unsigned long int bcid, ZhiCode z)
 {
+  struct _db_pool *_db = (struct _db_pool *)db;
   struct bimsContext *bc;
   int i;
 
@@ -1807,7 +1807,7 @@ bimsPindown(unsigned long int bcid, ZhiCode z)
   i = bc->yinpos;
   if (i == bc->yinlen && i > 0) i--;
   bc->pindown[i] = z;
-  bimsContextSmartEdit(bc);
+  bimsContextSmartEdit(_db, bc);
 
   return(0);
 }
@@ -1816,8 +1816,9 @@ bimsPindown(unsigned long int bcid, ZhiCode z)
  * pindown a Zhi by number
  */
 int
-bimsPindownByNumber(unsigned long int bcid, int sel)
+bimsPindownByNumber(DB_pool db, unsigned long int bcid, int sel)
 {
+  struct _db_pool *_db = (struct _db_pool *)db;
   struct bimsContext *bc;
   int i;
   unsigned char *str;
@@ -1841,7 +1842,7 @@ bimsPindownByNumber(unsigned long int bcid, int sel)
     else
        bc->tsiboundary[bc->yinpos] = 1;
   }
-  bimsContextSmartEdit(bc);
+  bimsContextSmartEdit(_db, bc);
 
   return(0);
 }
@@ -1878,8 +1879,9 @@ bimsSetMaxLen(unsigned long int bcid, int maxlen)
  * fetch some text from head
  */
 unsigned char *
-bimsFetchText(unsigned long int bcid, int len)
+bimsFetchText(DB_pool db, unsigned long int bcid, int len)
 {
+  struct _db_pool *_db = (struct _db_pool *)db;
   struct bimsContext *bc;
   unsigned char *str;
   int newlen, i, j, rval;
@@ -1891,7 +1893,8 @@ bimsFetchText(unsigned long int bcid, int len)
 
   /* see if we need to/can update DBs */
   if (bc->updatedb &&
-      !(tdb->flags & DB_FLAG_READONLY) && !(ydb->flags & DB_FLAG_READONLY)) {
+      !(_db->tdb->flags & DB_FLAG_READONLY) &&
+      !(_db->ydb->flags & DB_FLAG_READONLY)) {
     int ylen, yoff;
 
     for (i = 0; i < bc->num_ysinfo; i++) {
@@ -1907,7 +1910,7 @@ bimsFetchText(unsigned long int bcid, int len)
       ti.tsi = (ZhiStr)calloc(ylen*2+1, sizeof(char));
       if (!ti.tsi) { break; }
       strncpy((char *)ti.tsi, (char *)bc->internal_text+(yoff*2), ylen*2);
-      rval = tdb->Get(tdb, &ti);
+      rval = _db->tdb->Get(_db->tdb, &ti);
       if (rval == 0) {
 	for (j = 0; j < ti.yinnum; j++) {
 	  if (!memcmp(ti.yindata+(j*ylen), bc->yin+yoff, ylen*sizeof(Yin))) {
@@ -1929,7 +1932,7 @@ bimsFetchText(unsigned long int bcid, int len)
 	  if (yi.yin) {
 	    memcpy(yi.yin, bc->yin+yoff, ylen*sizeof(Yin));
 	    yi.yinlen = ylen;
-	    rval = ydb->Get(ydb, &yi);
+	    rval = _db->ydb->Get(_db->ydb, &yi);
 	    if (rval == 0) {
 	      /* see if the tsi is already in the yin db */
 	      for (j = 0; j < yi.tsinum; j++) {
@@ -1945,7 +1948,7 @@ bimsFetchText(unsigned long int bcid, int len)
 					     (yi.tsinum+1)*ylen*2+1);
 		memcpy(yi.tsidata+ylen*2, ti.tsi, ylen*2);
 		yi.tsinum += 1;
-		ydb->Put(ydb, &yi);
+		_db->ydb->Put(_db->ydb, &yi);
 	      }
 	      else {
 		/* tsi found in yin db */
@@ -1957,7 +1960,7 @@ bimsFetchText(unsigned long int bcid, int len)
 	      memcpy(yi.tsidata, ti.tsi, ylen*2*sizeof(char));
 	      yi.yinlen = ylen;
 	      yi.tsinum = 1;
-	      ydb->Put(ydb, &yi);
+	      _db->ydb->Put(_db->ydb, &yi);
 	    }
 	  }
 	}
@@ -1974,7 +1977,7 @@ bimsFetchText(unsigned long int bcid, int len)
 	ti.refcount = 1;
       }
       /* don't care whether it's success or not */
-      rval = tdb->Put(tdb, &ti);
+      rval = _db->tdb->Put(_db->tdb, &ti);
       free(ti.tsi);
       free(ti.yindata);
     }
@@ -1993,7 +1996,7 @@ bimsFetchText(unsigned long int bcid, int len)
 	  sizeof(int)*(bc->yinlen-newlen));
   bc->yinlen -= newlen;
 
-  bimsContextSmartEdit(bc);
+  bimsContextSmartEdit(_db, bc);
 
   return(str);
 }
@@ -2847,4 +2850,34 @@ bimsHsuZuYinContextInput(struct ZuYinContext *zc, int index)
   }
 
   return(rval);
+}
+
+/*
+ *  bims to tabe operation interfaces.
+ */
+unsigned char *
+bimstabeZhiToYin(DB_pool db, struct TsiInfo *zhi)
+{
+  struct _db_pool *_db = (struct _db_pool *)db;
+  int i, n_db;
+  struct TsiDB **t;
+  unsigned char *zhuyin=NULL;
+
+  if (zhi == NULL || zhi->tsi == NULL)
+    return NULL;
+  if (_db->len_pool == 0) {
+    t = &(_db->tdb);
+    n_db = 1;
+  }
+  else {
+    t = _db->tdb_pool;
+    n_db = _db->len_pool;
+  }
+  for (i=0; i<n_db; i++) {
+    if (t[i] != NULL && tabeTsiInfoLookupZhiYin(t[i], zhi) == 0) {
+      zhuyin = tabeYinToZuYinSymbolSequence(zhi->yindata[0]);
+      break;
+    }
+  }
+  return zhuyin;
 }

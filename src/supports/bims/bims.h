@@ -32,7 +32,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: bims.h,v 1.5 2001/09/22 13:05:53 thhsieh Exp $
+ * $Id: bims.h,v 1.6 2001/09/23 15:44:41 thhsieh Exp $
  *
  */
 #ifndef __BIMS_H__
@@ -109,20 +109,20 @@ enum {
   BC_KEYMAP_LAST
 };
 
+typedef void *	DB_pool;
+
 /* basic bims functions */
-int                 bimsInit   (char *tsidb, char *yindb);
-void                bimsDestroy(void);
+DB_pool             bimsInit   (char *tsidb, char *yindb);
+void                bimsDestroy(DB_pool db);
 struct bimsContext *bimsGetBC  (unsigned long int bcid);
 void                bimsFreeBC (unsigned long int bcid);
 
 /* use of multiple database */
-int                 bimsDBPoolAppend(char *tsidb, char *yindb);
-int                 bimsDBPoolPrepend(char *tsidb, char *yindb);
-int                 bimsDBPoolDelete(char *tsidb, char *yindb);
-int                 bimsReturnDBPool(struct TsiDB ***tsidb,
-                                     struct TsiYinDB ***yindb);
+int                 bimsDBPoolAppend(DB_pool db, char *tsidb, char *yindb);
+int                 bimsDBPoolPrepend(DB_pool db, char *tsidb, char *yindb);
+int                 bimsDBPoolDelete(DB_pool db, char *tsidb, char *yindb);
 
-int                 bimsFeedKey(unsigned long int bcid, KeySym key);
+int                 bimsFeedKey(DB_pool db, unsigned long int bcid, KeySym key);
 
 /*
  * return value of bimsFeedKey
@@ -140,21 +140,25 @@ enum {
 
 /* other bims client operations */
 int                 bimsToggleZhiSelection  (unsigned long int bcid);
-int                 bimsToggleTsiSelection  (unsigned long int bcid);
+int                 bimsToggleTsiSelection  (DB_pool db,
+                                             unsigned long int bcid);
 int                 bimsToggleEditing       (unsigned long int bcid);
 int                 bimsToggleSmartEditing  (unsigned long int bcid);
 int                 bimsToggleNoSmartEditing(unsigned long int bcid);
 int                 bimsToggleUpdate        (unsigned long int bcid);
 int                 bimsToggleNoUpdate      (unsigned long int bcid);
-int                 bimsPindown             (unsigned long int bcid,
+int                 bimsPindown             (DB_pool db,
+                                             unsigned long int bcid,
 					     ZhiCode z);
-int                 bimsPindownByNumber     (unsigned long int bcid,
+int                 bimsPindownByNumber     (DB_pool db,
+                                             unsigned long int bcid,
 					     int sel);
 int                 bimsSetSelectionBase    (unsigned long int bcid,
 					     int base);
 int                 bimsSetMaxLen           (unsigned long int bcid,
 					     int maxlen);
-unsigned char      *bimsFetchText           (unsigned long int bcid,
+unsigned char      *bimsFetchText           (DB_pool db,
+                                             unsigned long int bcid,
 					     int len);
 int                 bimsSetKeyMap           (unsigned long int bcid,
 					     int keymap);
@@ -168,5 +172,8 @@ unsigned char      *bimsQueryLastZuYinString(unsigned long int bcid);
 int                 bimsQuerySelectionNumber(unsigned long int bcid);
 unsigned char     **bimsQuerySelectionText  (unsigned long int bcid);
 int                 bimsQuerySelectionBase  (unsigned long int bcid);
+
+/* bims to tabe operations */
+unsigned char      *bimstabeZhiToYin        (DB_pool db, struct TsiInfo *zhi);
 
 #endif /* __BIMS_H__ */
