@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tabe_chu.c,v 1.3 2001/06/07 13:29:28 thhsieh Exp $
+ * $Id: tabe_chu.c,v 1.4 2001/12/22 01:16:38 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -14,6 +14,25 @@
 #include <string.h>
 
 #include "tabe.h"
+
+struct ChunkInfo *
+tabeChunkInfoNew(char *str)
+{
+  struct ChunkInfo *chunk;
+  int slen;
+
+  chunk = (struct ChunkInfo *) malloc(sizeof(struct ChunkInfo));
+  if (chunk == NULL)
+    return NULL;
+  memset(chunk,0, sizeof(struct ChunkInfo)); 
+
+  slen = strlen(str);
+  if (slen > 0) {
+    chunk->chunk = (ZhiStr) malloc(sizeof(unsigned char) * (slen+1));
+    strcpy(chunk->chunk, str);
+  }        
+  return chunk;
+}
 
 static void
 tabeChunkInfoFree(struct ChunkInfo *chunk)
@@ -32,6 +51,13 @@ tabeChunkInfoFree(struct ChunkInfo *chunk)
   }
 
   free(chunk->tsi);
+}
+
+void
+tabeChunkInfoDestroy(struct ChunkInfo *chunk)
+{
+  tabeChunkInfoFree(chunk);
+  free(chunk);
 }
 
 /*

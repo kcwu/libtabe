@@ -4,7 +4,7 @@
  * Copyright 1999, Chih-Hao Tsai, All Rights Reserved.
  * Copyright 1999, Shian-Hua Lin, All Rights Reserved.
  *
- * $Id: tabe_tsi.c,v 1.6 2001/12/18 16:55:40 thhsieh Exp $
+ * $Id: tabe_tsi.c,v 1.7 2001/12/22 01:16:38 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -16,6 +16,38 @@
 #include <string.h>
 
 #include "tabe.h"
+
+struct TsiInfo *
+tabeTsiInfoNew(char *str)
+{
+  struct TsiInfo *tsi;
+  int slen;
+
+  tsi = (struct TsiInfo *) malloc(sizeof(struct TsiInfo));
+  if (tsi == NULL)
+    return NULL;
+        
+  slen = strlen(str);
+  if (slen > 0) {
+    tsi->tsi = (ZhiStr) malloc(sizeof(unsigned char) * (slen+1));
+    strcpy(tsi->tsi, str);
+  }
+  tsi->refcount = 0;
+  tsi->yinnum = 0;
+  tsi->yindata = (Yin *)NULL;
+        
+  return tsi;
+}
+
+void
+tabeTsiInfoDestroy(struct TsiInfo *tsi)
+{
+  if (tsi->yindata) {
+    free(tsi->yindata);
+  }
+  free(tsi->tsi);
+  free(tsi);
+}
 
 /*
  * given a Tsi, loaded with all possible TsiYins

@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tabe.h,v 1.5 2001/10/15 16:17:52 thhsieh Exp $
+ * $Id: tabe.h,v 1.6 2001/12/22 01:16:38 thhsieh Exp $
  *
  */
 #ifndef __TABE_H__
@@ -99,6 +99,10 @@ int                 tabeTsiInfoLookupPossibleTsiYin(struct TsiDB *tsidb,
 struct TsiYinDB    *tabeTsiYinDBOpen(int type, const char *db_name,
 				     int flags);
 
+struct ChunkInfo   *tabeChunkInfoNew(char *str);
+
+void                tabeChunkInfoDestroy(struct ChunkInfo *chunk);
+
 int                 tabeChuInfoToChunkInfo(struct ChuInfo *chu);
 
 int                 tabeChunkSegmentationSimplex(struct TsiDB *tsidb,
@@ -107,6 +111,9 @@ int                 tabeChunkSegmentationComplex(struct TsiDB *tsidb,
 						 struct ChunkInfo *chunk);
 int                 tabeChunkSegmentationBackward(struct TsiDB *tsidb,
 						  struct ChunkInfo *chunk);
+struct TsiInfo *    tabeTsiInfoNew(char *str);
+
+void                tabeTsiInfoDestroy(struct TsiInfo *tsi);
 
 int                 tabeTsiInfoLookupZhiYin(struct TsiDB *tsidb,
                                             struct TsiInfo *z);

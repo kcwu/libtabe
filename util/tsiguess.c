@@ -37,39 +37,6 @@ usage(void)
 	exit(0);
 }
 
-
-struct TsiInfo *
-tabeTsiInfoNew(char *str)
-{
-	struct TsiInfo *tsi;
-	int size=0;
-
-	tsi = (struct TsiInfo *) malloc( sizeof(struct TsiInfo) );
-	
-	size = strlen(str)+1;
-	if ( size == 1 )  size=TSI_SIZE+1 ; 
-	
-	tsi->tsi = (ZhiStr) malloc( sizeof(unsigned char) * size );
-	memset(tsi->tsi, 0, size);
-	strcpy(tsi->tsi,str);
-	
-	tsi->refcount = 0;
-	tsi->yinnum = 0;
-	tsi->yindata = (Yin *)NULL;
-	
-	return tsi;
-}
-
-void
-tabeTsiInfoFree(struct TsiInfo *tsi) {
-	if (tsi->yindata) {
-		free (tsi->yindata) ;
-	}
-	free(tsi->tsi) ;
-	free(tsi);
-}
-
-
 void 
 tabeTsiInfoShow(struct TsiInfo *tsi)
 {
@@ -90,44 +57,6 @@ tabeTsiInfoShow(struct TsiInfo *tsi)
 		}
 		printf("\n");
 	}
-}
-
-
-struct ChunkInfo *
-tabeChunkInfoNew(char *str)
-{
-        struct ChunkInfo *chunk;
-        int size;
-
-	size=strlen(str)+1;
-        if ( size == 1 ) { size = CHUNK_SIZE+1 ; }
-        
-	chunk = (struct ChunkInfo *) malloc(sizeof(struct ChunkInfo));
-        memset(chunk,0, sizeof( struct ChunkInfo )); 
-
-	chunk->chunk = (char *) malloc( sizeof(unsigned char) * size );
-	strcpy(chunk->chunk,str);
-	
-	return chunk;
-}
-
-void
-tabeChunkInfoFree(struct ChunkInfo *chunk)
-{
-	int i;
-
-	if (chunk->chunk) {
-		free(chunk->chunk);
-	}
-
-	for (i=0; i < chunk->num_tsi; i++) {
-		if ((chunk->tsi+i)->yindata) {
-			free((chunk->tsi+i)->yindata);
-		}
-		free((chunk->tsi+i)->tsi);
-	}
-	free(chunk->tsi);
-	free(chunk);
 }
 
 void
@@ -174,23 +103,25 @@ tabeChuInfoNew(char *str)
         return chu;
 }
 
-int
-tabeChunkInfoGet(FILE *stream, struct ChunkInfo *chunk)
+struct ChunkInfo *
+tabeChunkInfoGet(FILE *stream)
 {
+	unsigned char str[CHUNK_SIZE];
         unsigned char *p=NULL;
-        unsigned int  hex=0;
+        unsigned int  hex=0, status=0;
 
-	p = chunk->chunk ;
+	p = str;
 	*p = '\0';
 
         while (1) {
                 if ( feof(stream) ) {
-			if ( p > chunk->chunk )	{
-                        	return TRUE;
+			if ( p > str ) {
+                        	status = TRUE;
 			}
-			else
-				return FALSE; {
+			else {
+				status = FALSE;
 			}
+			break;
 		}
 		*p=fgetc(stream) ;
 
@@ -198,9 +129,10 @@ tabeChunkInfoGet(FILE *stream, struct ChunkInfo *chunk)
 			*(p+1)=fgetc(stream);
 			hex = (*p) * 256 + *(p+1) ;
 			if ( IS_BIG5_SYMBOL(hex) || IS_BIG5_JP(hex) ) {
-				if ( p > chunk->chunk )	{
+				if ( p > str )	{
 					*p = '\0';
-					return TRUE;
+					status = TRUE;
+					break;
 				}
 				continue;
 			}
@@ -210,12 +142,17 @@ tabeChunkInfoGet(FILE *stream, struct ChunkInfo *chunk)
 			}
 		}
 		else { 
-			if ( ( isspace(*p) == FALSE) && (p > chunk->chunk) ) {
+			if ( ( isspace(*p) == FALSE) && (p > str) ) {
 				*p = '\0';
-				return TRUE;
+				status = TRUE;
+				break;
 			}
 		}
 	}
+	if (status == TRUE)
+		return tabeChunkInfoNew(str);
+	else
+		return NULL;
 }
 
 
@@ -275,7 +212,7 @@ tabe_guess_newtsi (struct ChunkInfo *chunk,
 				newdb->Get(newdb,tsi);
 				tsi->refcount++ ;
 				newdb->Put(newdb,tsi);
-				tabeTsiInfoFree(tsi);
+				tabeTsiInfoDestroy(tsi);
 			}
 		/* else 單字詞, if 罕見, 標記 for spelling check */
 			buf[0] = '\0';
@@ -290,7 +227,7 @@ tabe_guess_newtsi (struct ChunkInfo *chunk,
 		newdb->Get(newdb,tsi);
 		tsi->refcount++ ;
 		newdb->Put(newdb,tsi);
-		tabeTsiInfoFree(tsi);
+		tabeTsiInfoDestroy(tsi);
 	}
 
 	return 1;
@@ -341,8 +278,7 @@ main(int argc, char **argv)
 	str = (unsigned char *) malloc(sizeof(unsigned char) * 1024 );
 
 	while ( !feof(stdin) ) {
-		chunk = tabeChunkInfoNew("");
-        	if ( tabeChunkInfoGet(stdin, chunk) == TRUE ) { 
+        	if ( (chunk = tabeChunkInfoGet(stdin)) != NULL ) { 
 			tabeChunkSegmentationComplex(tsidb,chunk);
 			tabeChunkInfoShow(chunk);
 			tabe_guess_newtsi(chunk, str, newdb);
@@ -351,8 +287,8 @@ main(int argc, char **argv)
 				printf( "<<新詞: %s>>", str); 
 				str[0] = '\0';
 			}
+			tabeChunkInfoDestroy(chunk);
 		}
-		tabeChunkInfoFree(chunk);
 	}
 	printf("\n");
 
