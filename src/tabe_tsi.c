@@ -4,7 +4,7 @@
  * Copyright 1999, Chih-Hao Tsai, All Rights Reserved.
  * Copyright 1999, Shian-Hua Lin, All Rights Reserved.
  *
- * $Id: tabe_tsi.c,v 1.7 2001/12/22 01:16:38 thhsieh Exp $
+ * $Id: tabe_tsi.c,v 1.8 2003/05/06 14:07:08 kcwu Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -154,6 +154,7 @@ tabeChunkSegmentationSimplex(struct TsiDB *tsidb, struct ChunkInfo *chunk)
   return(0);
 }
 
+#define EPSILON 1e-9
 struct complex_mmseg {
   int s1, s2, s3;
   int len;                /* maximum matching
@@ -165,6 +166,31 @@ struct complex_mmseg {
   double largest_sum;     /* largest sum of degree of morhemic freedom of 
 			     one-character words (Tsai 1996) */
 };
+
+/*
+ * support function for tabeChunkSegmentationComplex()
+ * return 1 or 0 indicate isTsi or not
+ */
+static int isTsi(struct TsiDB *tsidb,char *str,int len)
+{
+  int rval;
+  char *buf;
+  struct TsiInfo tsi;
+
+  if(len<=2) return 1;
+
+  buf=(char*)malloc(len+1);
+  strncpy(buf, str, len);
+  buf[len] = '\0';
+  memset(&tsi, 0, sizeof(tsi));
+  tsi.tsi = buf;
+  rval = tsidb->Get(tsidb, &tsi);
+  if (tsi.yindata)
+    free(tsi.yindata);
+  free(buf);
+  
+  return rval>=0;
+}
 
 /*
  * implement of complex maximum matching segmentation algorithm
@@ -181,18 +207,20 @@ tabeChunkSegmentationComplex(struct TsiDB *tsidb, struct ChunkInfo *chunk)
   int tsihead, len = strlen((char *)chunk->chunk), ncomb = 0;
   int ncand, *cand;
   int *tmpcand, tmpncand;
-  ZhiStr buf;
   ZhiCode code;
-  struct TsiInfo tsi;
   int max_int, index;
   double max_double;
   int verbose = 0;
+#define MAXTSILEN 9
+  char (*tsicache)[MAXTSILEN+1]; // -1 unknown, 0 not, 1 yes
 
   if (len == 0) {
     return(0);
   }
 
-  buf = (ZhiStr)malloc(sizeof(unsigned char)*(len+1));
+#define MIN(a,b) ((a)<(b)?(a):(b))
+  tsicache = (char(*)[MAXTSILEN+1])malloc((len/2)*(MAXTSILEN+1));
+  memset(tsicache,-1,(len/2)*(MAXTSILEN+1));
   tsihead = 0;
 
   while (len > tsihead) {
@@ -207,7 +235,7 @@ tabeChunkSegmentationComplex(struct TsiDB *tsidb, struct ChunkInfo *chunk)
       chunk->tsi[chunk->num_tsi].yindata = (Yin *)NULL;
       tsidb->Get(tsidb, chunk->tsi+chunk->num_tsi);
       chunk->num_tsi++;
-      free(buf);
+      free(tsicache);
       return(0);
     }
     /*
@@ -215,12 +243,10 @@ tabeChunkSegmentationComplex(struct TsiDB *tsidb, struct ChunkInfo *chunk)
      * use simplex instead.
      */
     if (len == tsihead + 4) {
-      strncpy((char *)buf, (char *)chunk->chunk+tsihead, 4);
-      buf[4] = (unsigned char)NULL;
-      memset(&tsi, 0, sizeof(tsi));
-      tsi.tsi = buf;
-      rval = tsidb->Get(tsidb, &tsi);
-      if (rval < 0) { /* not found in DB, return two one-character word */
+      if(tsicache[tsihead/2][2]==-1)
+	tsicache[tsihead/2][2]=isTsi(tsidb,chunk->chunk+tsihead,4);
+      if (!tsicache[tsihead/2][2]) {
+	/* not found in DB, return two one-character word */
 	chunk->tsi = (struct TsiInfo *)
 	  realloc(chunk->tsi, sizeof(struct TsiInfo)*(chunk->num_tsi+2));
 
@@ -251,63 +277,32 @@ tabeChunkSegmentationComplex(struct TsiDB *tsidb, struct ChunkInfo *chunk)
 	tsidb->Get(tsidb, chunk->tsi+chunk->num_tsi);
 	chunk->num_tsi++;
       }
-      if (tsi.yindata)
-	free(tsi.yindata);
-      free(buf);
+      free(tsicache);
       return(0);
     }
 
-    for (i = len-tsihead; i > 0; i-=2) {
-      strncpy((char *)buf, (char *)chunk->chunk+tsihead, i);
-      buf[i] = (unsigned char)NULL;
-      memset(&tsi, 0, sizeof(tsi));
-      tsi.tsi = buf;
+    for (i = MIN(MAXTSILEN*2,len-tsihead); i > 0; i-=2) {
       if (i != 2) { /* we assume signle-character a tsi */
-	rval = tsidb->Get(tsidb, &tsi);
-	if (tsi.yindata) {
-	  free(tsi.yindata);
-	  tsi.yindata=NULL;
-	}
-	if (rval < 0) {
-	  continue;
-	}
+	if(tsicache[tsihead/2][i/2]==-1)
+	  tsicache[tsihead/2][i/2]=isTsi(tsidb,chunk->chunk+tsihead,i);
+	if(!tsicache[tsihead/2][i/2]) continue;
       }
-      for (j = len-tsihead-i; j >= 0; j-=2) {
+      for (j = MIN(MAXTSILEN*2,len-tsihead-i); j >= 0; j-=2) {
 	if (j > 0) {
-	  strncpy((char *)buf, (char *)chunk->chunk+tsihead+i, j);
-	  buf[j] = (unsigned char)NULL;
-	  memset(&tsi, 0, sizeof(tsi));
-	  tsi.tsi = buf;
 	  if (j != 2) { /* we assume signle-character a tsi */
-	    rval = tsidb->Get(tsidb, &tsi);
-	    if (tsi.yindata) {
-	      free(tsi.yindata);
-	      tsi.yindata=NULL;
-	    }
-	    if (rval < 0) {
-	      continue;
-	    }
+	    if(tsicache[(tsihead+i)/2][j/2]==-1)
+	      tsicache[(tsihead+i)/2][j/2]=isTsi(tsidb,chunk->chunk+tsihead+i,j);
+	    if(!tsicache[(tsihead+i)/2][j/2]) continue;
 	  }
 	}
-	for (k = len-tsihead-i-j; k >= 0; k-=2) {
+	for (k = MIN(MAXTSILEN*2,len-tsihead-i-j); k >= 0; k-=2) {
 	  if (k > 0) {
-	    strncpy((char *)buf, (char *)chunk->chunk+tsihead+i+j, k);
-	    buf[k] = (unsigned char)NULL;
-	    memset(&tsi, 0, sizeof(tsi));
-	    tsi.tsi = buf;
+	    if (j == 0) continue;
 	    if (k != 2) { /* we assume signle-character a tsi */
-	      rval = tsidb->Get(tsidb, &tsi);
-	      if (tsi.yindata) {
-	        free(tsi.yindata);
-	        tsi.yindata=NULL;
-	      }
-	      if (rval < 0) {
-		continue;
-	      }
+	      if(tsicache[(tsihead+i+j)/2][k/2]==-1)
+		tsicache[(tsihead+i+j)/2][k/2]=isTsi(tsidb,chunk->chunk+tsihead+i+j,k);
+	      if(!tsicache[(tsihead+i+j)/2][k/2]) continue;
 	    }
-	  }
-	  if (k > 0 && j == 0) {
-	    continue;
 	  }
 	  comb = (struct complex_mmseg *)
 	    realloc(comb, sizeof(struct complex_mmseg)*(ncomb+1));
@@ -387,7 +382,7 @@ tabeChunkSegmentationComplex(struct TsiDB *tsidb, struct ChunkInfo *chunk)
       tmpcand = (int *)NULL;
       for (i = 0; i < ncand; i++) {
 	index = cand[i];
-	if (comb[index].avg_word_len == max_double) {
+	if (fabs(comb[index].avg_word_len - max_double) < EPSILON) {
 	  tmpcand = (int *)realloc(tmpcand, sizeof(int)*(tmpncand+1));
 	  tmpcand[tmpncand] = index;
 	  tmpncand++;
@@ -439,7 +434,7 @@ tabeChunkSegmentationComplex(struct TsiDB *tsidb, struct ChunkInfo *chunk)
 	tmpcand = (int *)NULL;
 	for (i = 0; i < ncand; i++) {
 	  index = cand[i];
-	  if (comb[index].smallest_var == max_double) {
+	  if (fabs(comb[index].smallest_var - max_double)<EPSILON) {
 	    tmpcand = (int *)realloc(tmpcand, sizeof(int)*(tmpncand+1));
 	    tmpcand[tmpncand] = index;
 	    tmpncand++;
@@ -498,7 +493,7 @@ tabeChunkSegmentationComplex(struct TsiDB *tsidb, struct ChunkInfo *chunk)
 	  tmpcand = (int *)NULL;
 	  for (i = 0; i < ncand; i++) {
 	    index = cand[i];
-	    if (comb[index].largest_sum == max_double) {
+	    if (fabs(comb[index].largest_sum - max_double)<EPSILON) {
 	      tmpcand = (int *)realloc(tmpcand, sizeof(int)*(tmpncand+1));
 	      tmpcand[tmpncand] = index;
 	      tmpncand++;
@@ -541,7 +536,7 @@ tabeChunkSegmentationComplex(struct TsiDB *tsidb, struct ChunkInfo *chunk)
     ncomb = 0;
     free(cand);
   }
-  free(buf);
+  free(tsicache);
   return(0);
 }
 

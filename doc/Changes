@@ -38,6 +38,10 @@
     $HOME/.xcin/newdb. But one can use the flag "-u" to specify the
     path of user defined DB file.
 
+11. Fix bug in tabe_tsi.c: tabeChunkSegmentationComplex():
+    the same floating point number precision problem found in bims.c.
+    Speed up and clean up tsiguess.c and tabe_tsi.c
+    By Kuang-che Wu <kcwu@ck.tp.edu.tw>
 
 0.2.5: 2001/12/02
 ---------------------

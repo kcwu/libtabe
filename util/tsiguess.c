@@ -1,7 +1,7 @@
 /*
  * Copyright 2001, TaBE Project, All Rights Reserved.
  * 
- * $Id: tsiguess.c,v 1.4 2002/12/10 02:36:56 thhsieh Exp $  
+ * $Id: tsiguess.c,v 1.5 2003/05/06 14:07:08 kcwu Exp $  
  * 
  */
 #include <stdio.h>
@@ -13,8 +13,7 @@
 #include "version.h"
 
 #define CHU_SIZE        1024
-#define CHUNK_SIZE      1024
-#define TSI_SIZE        32
+#define CHUNK_SIZE      1048576
 
 /* big5 variant, http://m2000.idv.tw/informer/big5 */
 
@@ -25,7 +24,8 @@
  
 #define BIG5_TO_HEX (hi,lo) ( (hi) * 256 + (lo) )
                                                                                 
-#define IS_BIG5_SYMBOL(hex) ((((hex) >= 0xA140 && (hex) <= 0xA3BF ) ||\
+#define IS_BIG5_SPACE(hex) ((hex)==0xA140)
+#define IS_BIG5_SYMBOL(hex) ((((hex) >= 0xA141 && (hex) <= 0xA3BF ) ||\
                               ((hex) >= 0xF9DD && (hex) <= 0xF9FE )   \
                             ) ? 1 : 0 )
                                                                                 
@@ -133,7 +133,11 @@ tabeChunkInfoGet(FILE *stream)
                 if ( IS_BIG5HI(*p) ) {
 			*(p+1)=fgetc(stream);
 			hex = (*p) * 256 + *(p+1) ;
-			if ( IS_BIG5_SYMBOL(hex) || IS_BIG5_JP(hex) ) {
+			if ( !IS_BIG5LO(*(p+1)) )
+				continue;
+			else if ( IS_BIG5_SPACE(hex) ) {
+				continue;
+			} else if ( IS_BIG5_SYMBOL(hex) || IS_BIG5_JP(hex) ) {
 				if ( p > str )	{
 					*p = '\0';
 					status = TRUE;
@@ -152,6 +156,11 @@ tabeChunkInfoGet(FILE *stream)
 				status = TRUE;
 				break;
 			}
+		}
+		if(p-str>CHUNK_SIZE-64) {
+		  *p='\0';
+		  status=TRUE;
+		  break;
 		}
 	}
 	if (status == TRUE)
@@ -178,10 +187,9 @@ isprep(unsigned char *zhi)
 /* 及物動詞 */		"是有作做讓說" \
 /* misc */		"我你妳您他她它牠祂";
 
-	int i=0, len;
+	int i=0;
 
-	len = strlen(preplist);
-	for (i=0; i<len; i+=2) {
+	for (i=0; preplist[i]; i+=2) {
                 if ( strncmp(zhi, preplist+i, 2) == 0 ) 
 			return TRUE;
 	}
@@ -198,22 +206,26 @@ tabe_guess_newtsi (struct ChunkInfo *chunk,
 	unsigned char  *tsi_str;
 	struct TsiInfo *tsi;		
         char buf[1024]="";
+	int buflen=0;
 	
 	if (newdb == NULL)
 		return 0;
-	return_str[0] = '\0';
+	//return_str[0] = '\0';
 
         for (i=0; i < chunk->num_tsi ; i++) {
+		int tsilen;
 		tsi_str = (chunk->tsi+i)->tsi ;
-                if ( strlen(tsi_str) == 2 && isprep(tsi_str) == FALSE ) {
-                        strcat(buf, tsi_str);
+		tsilen=strlen(tsi_str);
+                if ( tsilen == 2 && isprep(tsi_str) == FALSE ) {
+			strcpy(buf+buflen,tsi_str);
+			buflen+=tsilen;
 					  /* 單字詞, 加到 buff */
                 }
 
 		else {		          /* 不是單字詞, 開始整理 buf */
-			if ( strlen(buf) >= 4 ) {  
-				strcat(return_str, buf); /*得到連續單字詞*/
-				strcat(return_str, " ");
+			if ( buflen >= 4 ) {  
+				//strcat(return_str, buf); /*得到連續單字詞*/
+				//strcat(return_str, " ");
 
 				tsi=tabeTsiInfoNew(buf);
 				newdb->Get(newdb,tsi);
@@ -223,12 +235,13 @@ tabe_guess_newtsi (struct ChunkInfo *chunk,
 			}
 		/* else 單字詞, if 罕見, 標記 for spelling check */
 			buf[0] = '\0';
+			buflen=0;
 		}
 	}
 
-	if ( strlen(buf) >= 4 ) { /* at the end of chunk, check again */
-		strcat(return_str, buf);
-		strcat(return_str, " ");
+	if ( buflen >= 4 ) { /* at the end of chunk, check again */
+		//strcat(return_str, buf);
+		//strcat(return_str, " ");
 		
 		tsi=tabeTsiInfoNew(buf);
 		newdb->Get(newdb,tsi);
@@ -275,7 +288,8 @@ main(int argc, char **argv)
     		usage();
 	}
 	
-	tsidb = tabeTsiDBOpen(DB_TYPE_DB, tsidb_name, DB_FLAG_READONLY);
+	tsidb = tabeTsiDBOpen(DB_TYPE_DB, tsidb_name, 
+	    DB_FLAG_READONLY|DB_FLAG_NOUNPACK_YIN);
 	if (!tsidb) {
   		usage();
 	}
@@ -290,14 +304,16 @@ main(int argc, char **argv)
 	while ( !feof(stdin) ) {
         	if ( (chunk = tabeChunkInfoGet(stdin)) != NULL ) { 
 			tabeChunkSegmentationComplex(tsidb,chunk);
-			tabeChunkInfoShow(chunk);
+			//tabeChunkInfoShow(chunk);
 			if (newdb)
 				tabe_guess_newtsi(chunk, str, newdb);
 			
+			/*
 			if ( strlen(str) > 0 ) {
 				printf( "<<新詞: %s>>", str); 
 				str[0] = '\0';
 			}
+			*/
 			tabeChunkInfoDestroy(chunk);
 		}
 	}
