@@ -4,7 +4,7 @@
  * Copyright 1999, Chih-Hao Tsai, All Rights Reserved.
  * Copyright 1999, Shian-Hua Lin, All Rights Reserved.
  *
- * $Id: tabe_tsi.c,v 1.8 2003/05/06 14:07:08 kcwu Exp $
+ * $Id: tabe_tsi.c,v 1.9 2003/05/06 14:33:42 kcwu Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -211,7 +211,7 @@ tabeChunkSegmentationComplex(struct TsiDB *tsidb, struct ChunkInfo *chunk)
   int max_int, index;
   double max_double;
   int verbose = 0;
-#define MAXTSILEN 9
+#define MAXTSILEN 10
   char (*tsicache)[MAXTSILEN+1]; // -1 unknown, 0 not, 1 yes
 
   if (len == 0) {
