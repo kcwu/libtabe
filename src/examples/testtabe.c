@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: testtabe.c,v 1.1 2000/12/09 09:14:16 thhsieh Exp $
+ * $Id: testtabe.c,v 1.2 2002/08/11 01:58:11 kcwu Exp $
  *
  */
 #include <stdio.h>
@@ -175,10 +175,8 @@ test_tsidb()
   }
 
   tsi = (struct TsiInfo *)malloc(sizeof(struct TsiInfo)); 
+  memset(tsi, 0, sizeof(struct TsiInfo));
   tsi->tsi = (unsigned char *)malloc(sizeof(unsigned char)*80);
-  tsi->refcount = -1;
-  tsi->yinnum = -1;
-  tsi->yindata = NULL;
 
   printf("==> Dumping TsiDB from ...%s\n", sample_tsi);
   strcpy(tsi->tsi, sample_tsi);

@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tsidel.c,v 1.3 2001/12/04 15:05:19 thhsieh Exp $
+ * $Id: tsidel.c,v 1.4 2002/08/11 01:58:11 kcwu Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -48,11 +48,9 @@ del(struct TsiDB *db, FILE *fp)
   }
 
   tsi = (struct TsiInfo *)malloc(sizeof(struct TsiInfo));
+  memset(tsi, 0, sizeof(struct TsiInfo));
   tsi->tsi = (ZhiStr)malloc(sizeof(unsigned char)*80);
   memset(tsi->tsi, 0, 80);
-  tsi->refcount = -1;
-  tsi->yinnum = -1;
-  tsi->yindata = (Yin *)NULL;
 
   i = j = 0;
   while (1) {

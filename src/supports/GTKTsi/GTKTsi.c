@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: GTKTsi.c,v 1.1 2000/12/09 09:14:16 thhsieh Exp $
+ * $Id: GTKTsi.c,v 1.2 2002/08/11 01:58:11 kcwu Exp $
  *
  */
 #include <stdio.h>
@@ -134,8 +134,6 @@ int opt;
   memset(tsi, 0, sizeof(struct TsiInfo));
   tsi->tsi = (unsigned char *)malloc(sizeof(unsigned char)*80);
   memset(tsi->tsi, 0, 80);
-  tsi->refcount = -1;
-  tsi->yinnum = -1;
 
   for (i = 0; i < NUMBER_OF_CLIST_COLUMN; i++) {
     data[i] = (gchar *)malloc(sizeof(gchar)*200);
@@ -954,11 +952,9 @@ void *data;
   }
 
   tsi = (struct TsiInfo *)malloc(sizeof(struct TsiInfo));
+  memset(tsi, 0, sizeof(struct TsiInfo));
   tsi->tsi = (unsigned char *)malloc(sizeof(unsigned char)*80);
   memset(tsi->tsi, 0, 80);
-  tsi->refcount = -1;
-  tsi->yinnum = -1;
-  tsi->yindata = (Yin *)NULL;
 
   tsiyin = (struct TsiYinInfo *)malloc(sizeof(struct TsiYinInfo));
   memset(tsiyin, 0, sizeof(struct TsiYinInfo));
