@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tsiadd.c,v 1.2 2001/01/12 15:38:46 thhsieh Exp $
+ * $Id: tsiadd.c,v 1.3 2001/01/29 16:29:34 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -230,7 +230,7 @@ tsiyin_expand(char *yin, int yinlen, char *tmpyin, int verbose)
   else {
     *s1 = '\0';
   }
-  if (verbose) {
+  if (verbose >= 2) {
     printf("%s\n", yinbuf);
   }
 
@@ -334,6 +334,8 @@ archive(struct TsiDB *db, FILE *fp, int ref, int tsiyin, int verbose)
 
     len = strlen((char *)tsi->tsi)/2;
     if (strlen((char *)yin)) {
+      Yin yin_ret;
+
       l = 0;
       p = yin;
       while ((p = (unsigned char *)strstr((char *)p, "¡@"))) {
@@ -349,13 +351,21 @@ archive(struct TsiDB *db, FILE *fp, int ref, int tsiyin, int verbose)
            if (q) {
              strncpy((char *)tmpyin, (char *)p, q-p);
              tmpyin[q-p] = (unsigned char)NULL;
-             tsi->yindata[m*len+n] = tabeZuYinSymbolSequenceToYin(tmpyin);
+	     yin_ret = tabeZuYinSymbolSequenceToYin(tmpyin);
+	     if (yin_ret == (Yin)0 && verbose) {
+	       fprintf(stderr, "Warning: invalid Yin in: %s\n", buf);
+	     }
+             tsi->yindata[m*len+n] = yin_ret;
              p = q+2;
            }
            else {
              strncpy((char *)tmpyin, (char *)p, strlen((char *)p));
              tmpyin[strlen((char *)p)] = (unsigned char)NULL;
-             tsi->yindata[m*len+n] = tabeZuYinSymbolSequenceToYin(tmpyin);
+	     yin_ret = tabeZuYinSymbolSequenceToYin(tmpyin);
+	     if (yin_ret == (Yin)0 && verbose) {
+	       fprintf(stderr, "Warning: invalid Yin in: %s\n", buf);
+	     }
+             tsi->yindata[m*len+n] = yin_ret;
              break;
            }
         }
@@ -389,7 +399,7 @@ int
 main(int argc, char **argv)
 {
   int ch;
-  int ref, tsiyin, verbose;
+  int ref, tsiyin, verbose=0;
   FILE *fp;
   struct TsiDB *db;
 extern char *optarg;
@@ -417,7 +427,7 @@ extern int optind, opterr, optopt;
         tsiyin = 1;
         break;
       case 'v':
-	verbose = 1;
+	verbose ++;
 	break;
       default:
         usage();
