@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tsiyindump.c,v 1.2 2001/09/20 00:30:25 thhsieh Exp $
+ * $Id: tsiyindump.c,v 1.3 2001/10/16 00:44:43 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -52,7 +52,7 @@ dump(struct TsiDB *db, struct TsiYinDB *ydb)
   i = 0;
   while (1) {
     if (i == 0) {
-      db->CursorSet(db, tsi);
+      db->CursorSet(db, tsi, 0);
     }
     else {
       rval = db->CursorNext(db, tsi);

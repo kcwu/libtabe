@@ -3,7 +3,7 @@
  *
  * Contributed by Kuang-che Wu <kcwu@ck.tp.edu.tw>
  *
- * $Id: tsiyincheck.c,v 1.2 2001/09/20 00:30:25 thhsieh Exp $
+ * $Id: tsiyincheck.c,v 1.3 2001/10/16 00:44:43 thhsieh Exp $
  */
 #include <stdio.h>
 #include <string.h>
@@ -103,7 +103,7 @@ void check_cmex_yin(struct TsiDB *db, struct TsiYinDB *yindb, FILE *fp)
   memset(&tsi,0,sizeof(struct TsiInfo));
   tsi.tsi=(ZhiStr)calloc(1,1024);
 
-  for(rval=db->CursorSet(db,&tsi);rval>=0;rval=db->CursorNext(db,&tsi)) {
+  for(rval=db->CursorSet(db,&tsi,0);rval>=0;rval=db->CursorNext(db,&tsi)) {
     int len=strlen((char *)tsi.tsi)/2;
     for(i=0;i<tsi.yinnum;i++)
       for(j=0;j<len;j++) {
@@ -132,7 +132,7 @@ void check_consistency(struct TsiDB *db, struct TsiYinDB *yindb, FILE *fp)
   memset(&tsi,0,sizeof(struct TsiInfo));
   tsi.tsi=(ZhiStr)calloc(1,1024);
 
-  for(rval=db->CursorSet(db,&tsi);rval>=0;rval=db->CursorNext(db,&tsi)) {
+  for(rval=db->CursorSet(db,&tsi,0);rval>=0;rval=db->CursorNext(db,&tsi)) {
     int len=strlen((char *)tsi.tsi)/2;
     for(i=0;i<tsi.yinnum;i++)
       for(j=0;j<len;j++) {
@@ -164,7 +164,7 @@ void check_maybe_tsi_typo(struct TsiDB *db, struct TsiYinDB *yindb, FILE *fp)
   tsi.tsi=(ZhiStr)calloc(1,1024);
   memset(&yin,0,sizeof(yin));
 
-  for(rval=db->CursorSet(db,&tsi);rval>=0;rval=db->CursorNext(db,&tsi)) {
+  for(rval=db->CursorSet(db,&tsi,0);rval>=0;rval=db->CursorNext(db,&tsi)) {
     int len=strlen((char *)tsi.tsi)/2;
     if(len<3) continue;
 
