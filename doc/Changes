@@ -1,3 +1,9 @@
+0.2.5: 2001/
+---------------------
+1. Fix bug in bims.c: et26: t+space.
+   Thansk to Huang, Jiun-Jeng <jouston@housediy.com>.
+   
+
 0.2.4: 2001/10/19
 ---------------------
 1. Complete the ZhuYin filling project of tsi.src.

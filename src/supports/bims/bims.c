@@ -32,7 +32,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: bims.c,v 1.10 2001/10/14 11:32:25 thhsieh Exp $
+ * $Id: bims.c,v 1.11 2001/11/02 12:45:29 thhsieh Exp $
  */
 #ifdef HAVE_CONFIG_H
 #include "../../../config.h"
@@ -2582,6 +2582,10 @@ bimsEten26ZuYinContextInput(struct ZuYinContext *zc, int index)
       if (zc->index[0] == 2) {
 	zc->index[0] = 0;
 	zc->index[2] = 32;
+      }
+      else if (zc->index[0] == 6) {
+	zc->index[0] = 0;
+	zc->index[2] = 35;
       }
       else if (zc->index[0] == 7) {
 	zc->index[0] = 0;
