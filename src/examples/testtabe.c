@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: testtabe.c,v 1.2 2002/08/11 01:58:11 kcwu Exp $
+ * $Id: testtabe.c,v 1.3 2004/09/18 17:50:00 kcwu Exp $
  *
  */
 #include <stdio.h>
@@ -15,6 +15,7 @@
 
 #include "tabe.h"
 
+#if 0
 /*
  * cross test zhi2yin and yin2zhi tables
  */
@@ -88,6 +89,7 @@ test_table()
   printf("Char of four  Yin = %ld\n", yinsubsum[3]);
   printf("Average Yin of Zhi = %.2f\n", refyin/refchar);
 }
+#endif
 
 void
 test_zuyin()
@@ -168,7 +170,7 @@ test_tsidb()
   int rval;
   int i;
 
-  db = tabeTsiDBOpen(DB_TYPE_DB, db_name, 0);
+  db = tabeTsiDBOpen(DB_TYPE_DB, db_name, DB_FLAG_READONLY);
   if (!db) {
     printf("Error: can not open db %s.\n", db_name);
     return;
@@ -184,8 +186,8 @@ test_tsidb()
   if (rval < 0) {
     printf("Error: %s not found.\n", tsi->tsi);
   }
-  db->CursorSet(db, tsi);
-  for (i = 0; i < 1000; i++) {
+  db->CursorSet(db, tsi, 0);
+  for (i = 0; i < 100; i++) {
     db->CursorNext(db, tsi);
     printf("%d %s %ld %ld\n", i, tsi->tsi, tsi->yinnum, tsi->refcount);
   }
@@ -204,15 +206,16 @@ test_seg_simplex()
 
   FILE *fp = fopen(filename, "r");
 
+  printf("==> Segmentation file \"%s\" using Simplex Method...\n", filename);
   if (!fp) {
+    perror("test_seg_simplex()");
     return;
   }
-  printf("==> Segmentation file \"%s\" using Simplex Method...\n", filename);
   chu = malloc(sizeof(struct ChuInfo));
   memset(chu, 0, sizeof(struct ChuInfo));
   chu->chu = buf;
 
-  tdb = tabeTsiDBOpen(DB_TYPE_DB, "tsi.db", 0);
+  tdb = tabeTsiDBOpen(DB_TYPE_DB, "tsi.db", DB_FLAG_READONLY);
 
   while (1) {
     if (!fgets(buf, 1000, fp)) {
@@ -245,15 +248,16 @@ test_seg_backward()
 
   FILE *fp = fopen(filename, "r");
 
+  printf("==> Segmentation file \"%s\" using Backward Method...\n", filename);
   if (!fp) {
+    perror("test_seg_backward()");
     return;
   }
-  printf("==> Segmentation file \"%s\" using Backward Method...\n", filename);
   chu = malloc(sizeof(struct ChuInfo));
   memset(chu, 0, sizeof(struct ChuInfo));
   chu->chu = buf;
 
-  tdb = tabeTsiDBOpen(DB_TYPE_DB, "tsi.db", 0);
+  tdb = tabeTsiDBOpen(DB_TYPE_DB, "tsi.db", DB_FLAG_READONLY);
 
   while (1) {
     if (!fgets(buf, 1000, fp)) {
@@ -286,15 +290,16 @@ test_seg_complex()
 
   FILE *fp = fopen(filename, "r");
 
+  printf("==> Segmentation file \"%s\" using Complex Method...\n", filename);
   if (!fp) {
+    perror("test_seg_complex()");
     return;
   }
-  printf("==> Segmentation file \"%s\" using Complex Method...\n", filename);
   chu = malloc(sizeof(struct ChuInfo));
   memset(chu, 0, sizeof(struct ChuInfo));
   chu->chu = buf;
 
-  tdb = tabeTsiDBOpen(DB_TYPE_DB, "tsi.db", 0);
+  tdb = tabeTsiDBOpen(DB_TYPE_DB, "tsi.db", DB_FLAG_READONLY);
 
   while (1) {
     if (!fgets(buf, 1000, fp)) {
@@ -320,7 +325,7 @@ int
 main(void)
 {
   printf("\n");
-  test_table();
+//  test_table();
   printf("\n");
   test_zuyin();
   printf("\n");
