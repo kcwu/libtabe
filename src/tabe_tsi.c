@@ -4,7 +4,7 @@
  * Copyright 1999, Chih-Hao Tsai, All Rights Reserved.
  * Copyright 1999, Shian-Hua Lin, All Rights Reserved.
  *
- * $Id: tabe_tsi.c,v 1.4 2001/12/16 16:46:05 thhsieh Exp $
+ * $Id: tabe_tsi.c,v 1.5 2001/12/18 15:40:51 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -103,12 +103,7 @@ tabeChunkSegmentationSimplex(struct TsiDB *tsidb, struct ChunkInfo *chunk)
       tsi.tsi = buf;
       strncpy((char *)buf, (char *)chunk->chunk+tsihead, tsilen);
       buf[tsilen] = (unsigned char)NULL;
-      if (tsilen == 2) { /* we assume signle-character a word */
-	rval = 0;
-      }
-      else {
-	rval = tsidb->Get(tsidb, &tsi);
-      }
+      rval = tsidb->Get(tsidb, &tsi);
       if (!rval) {
 	chunk->tsi = (struct TsiInfo *)
 	  realloc(chunk->tsi, sizeof(struct TsiInfo)*(chunk->num_tsi+1));
@@ -224,6 +219,8 @@ tabeChunkSegmentationComplex(struct TsiDB *tsidb, struct ChunkInfo *chunk)
 	tsidb->Get(tsidb, chunk->tsi+chunk->num_tsi);
 	chunk->num_tsi++;
       }
+      if (tsi.yindata)
+	free(tsi.yindata);
       free(buf);
       return(0);
     }
@@ -235,6 +232,10 @@ tabeChunkSegmentationComplex(struct TsiDB *tsidb, struct ChunkInfo *chunk)
       tsi.tsi = buf;
       if (i != 2) { /* we assume signle-character a tsi */
 	rval = tsidb->Get(tsidb, &tsi);
+	if (tsi.yindata) {
+	  free(tsi.yindata);
+	  tsi.yindata=NULL;
+	}
 	if (rval < 0) {
 	  continue;
 	}
@@ -247,6 +248,10 @@ tabeChunkSegmentationComplex(struct TsiDB *tsidb, struct ChunkInfo *chunk)
 	  tsi.tsi = buf;
 	  if (j != 2) { /* we assume signle-character a tsi */
 	    rval = tsidb->Get(tsidb, &tsi);
+	    if (tsi.yindata) {
+	      free(tsi.yindata);
+	      tsi.yindata=NULL;
+	    }
 	    if (rval < 0) {
 	      continue;
 	    }
@@ -260,6 +265,10 @@ tabeChunkSegmentationComplex(struct TsiDB *tsidb, struct ChunkInfo *chunk)
 	    tsi.tsi = buf;
 	    if (k != 2) { /* we assume signle-character a tsi */
 	      rval = tsidb->Get(tsidb, &tsi);
+	      if (tsi.yindata) {
+	        free(tsi.yindata);
+	        tsi.yindata=NULL;
+	      }
 	      if (rval < 0) {
 		continue;
 	      }
