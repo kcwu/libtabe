@@ -9,6 +9,12 @@
    Thanks to Pofeng Lee <informer@ns1.m2000.idv.tw>
 	     Rui-Xiang Guo <rxg@ms25.url.com.tw>
 
+3. Change the "rm $(PACKDB)" from "make clean" to "make distclean".
+   Thanks to Kuang-che Wu <kcwu@ck.tp.edu.tw>.
+
+4. Fix several memory leakage problem.
+   Thanks to Kuang-che Wu <kcwu@ck.tp.edu.tw>.
+
 
 0.2.5: 2001/12/02
 ---------------------

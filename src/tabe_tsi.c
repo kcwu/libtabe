@@ -4,7 +4,7 @@
  * Copyright 1999, Chih-Hao Tsai, All Rights Reserved.
  * Copyright 1999, Shian-Hua Lin, All Rights Reserved.
  *
- * $Id: tabe_tsi.c,v 1.3 2001/11/11 12:33:07 thhsieh Exp $
+ * $Id: tabe_tsi.c,v 1.4 2001/12/16 16:46:05 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -122,6 +122,7 @@ tabeChunkSegmentationSimplex(struct TsiDB *tsidb, struct ChunkInfo *chunk)
       }
     }
   }
+  free(buf);
 
   return(0);
 }
@@ -179,6 +180,7 @@ tabeChunkSegmentationComplex(struct TsiDB *tsidb, struct ChunkInfo *chunk)
       chunk->tsi[chunk->num_tsi].yindata = (Yin *)NULL;
       tsidb->Get(tsidb, chunk->tsi+chunk->num_tsi);
       chunk->num_tsi++;
+      free(buf);
       return(0);
     }
     /*
@@ -222,6 +224,7 @@ tabeChunkSegmentationComplex(struct TsiDB *tsidb, struct ChunkInfo *chunk)
 	tsidb->Get(tsidb, chunk->tsi+chunk->num_tsi);
 	chunk->num_tsi++;
       }
+      free(buf);
       return(0);
     }
 
@@ -497,7 +500,7 @@ tabeChunkSegmentationComplex(struct TsiDB *tsidb, struct ChunkInfo *chunk)
     ncomb = 0;
     free(cand);
   }
-
+  free(buf);
   return(0);
 }
 
@@ -551,6 +554,7 @@ tabeChunkSegmentationBackward(struct TsiDB *tsidb, struct ChunkInfo *chunk)
   }
   free(chunk->tsi);
   chunk->tsi = tmptsi;
+  free(buf);
 
   return(0);
 }

@@ -32,7 +32,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: bims.c,v 1.13 2001/11/05 15:23:39 thhsieh Exp $
+ * $Id: bims.c,v 1.14 2001/12/16 16:46:08 thhsieh Exp $
  */
 #ifdef HAVE_CONFIG_H
 #include "../../../config.h"
@@ -898,6 +898,7 @@ bimsContextDP(struct _db_pool *_db, struct bimsContext *bc)
   memset(yin, 0, sizeof(Yin)*TMP_BUFFER);
   memset(&tsi, 0, sizeof(tsi));
   memset(tmp, 0, sizeof(unsigned char)*TMP_BUFFER);
+  memset(&ty, 0, sizeof(ty));
   tsi.tsi = tmp;
 
   while (len > yinhead) {
@@ -921,9 +922,13 @@ bimsContextDP(struct _db_pool *_db, struct bimsContext *bc)
       ysinfo[num_ysinfo].yindata = (Yin *)malloc(sizeof(Yin)*2);
       memcpy(ysinfo[num_ysinfo].yindata, bc->yin+yinhead, sizeof(Yin)*2);
       num_ysinfo++;
-      if(!bc->tsiboundary[yinhead+1]) {
+      if (!bc->tsiboundary[yinhead+1]) {
 	/* done duplicate a two-character word */
+/*
+	if (ty.tsidata)
+	  free(ty.tsidata);
 	memset(&ty, 0, sizeof(ty));
+*/
 	ty.yinlen = 2;
 	ty.yin = ysinfo[num_ysinfo-1].yindata;
 	rval = bimsTsiYinDBPoolSearch(_db, &ty);
@@ -954,7 +959,11 @@ bimsContextDP(struct _db_pool *_db, struct bimsContext *bc)
       if (z != i) {
         continue;
       }
+/*
+      if (ty.tsidata)
+	free(ty.tsidata);
       memset(&ty, 0, sizeof(ty));
+*/
       ty.yinlen = i;
       memcpy(yin, bc->yin+yinhead, sizeof(Yin)*i);
       ty.yin = yin;
@@ -975,7 +984,11 @@ bimsContextDP(struct _db_pool *_db, struct bimsContext *bc)
           if(z != j) {
             continue;
           }
+/*
+	  if (ty.tsidata)
+	    free(ty.tsidata);
 	  memset(&ty, 0, sizeof(ty));
+*/
 	  ty.yinlen = j;
 	  memcpy(yin, bc->yin+yinhead+i, sizeof(Yin)*j);
 	  ty.yin = yin;
@@ -1000,7 +1013,11 @@ bimsContextDP(struct _db_pool *_db, struct bimsContext *bc)
 	    if(z != k) {
 	      continue;
 	    }
+/*
+	    if (ty.tsidata)
+	      free(ty.tsidata);
 	    memset(&ty, 0, sizeof(ty));
+*/
 	    ty.yinlen = k;
 	    memcpy(yin, bc->yin+yinhead+i+j, sizeof(Yin)*k);
 	    ty.yin = yin;
@@ -1182,7 +1199,11 @@ bimsContextDP(struct _db_pool *_db, struct bimsContext *bc)
 	    comb[index].largest_sum = 0;
 	    k = (comb[index].s2-comb[index].s1);
 	    if (k > 1) {
+/*
+	      if (ty.tsidata);
+		free(ty.tsidata);
 	      memset(&ty, 0, sizeof(ty));
+*/
 	      ty.yinlen = k;
 	      memcpy(yin, bc->yin+comb[index].s1, sizeof(Yin)*k);
 	      ty.yin = yin;
@@ -1203,7 +1224,11 @@ bimsContextDP(struct _db_pool *_db, struct bimsContext *bc)
 	    }
 	    k = (comb[index].s3-comb[index].s2);
 	    if (k > 1) {
+/*
+	      if (ty.tsidata);
+		free(ty.tsidata);
 	      memset(&ty, 0, sizeof(ty));
+*/
 	      ty.yinlen = k;
 	      memcpy(yin, bc->yin+comb[index].s2, sizeof(Yin)*k);
 	      ty.yin = yin;
@@ -1224,7 +1249,11 @@ bimsContextDP(struct _db_pool *_db, struct bimsContext *bc)
 	    }
 	    k = (comb[index].len+comb[index].s1-comb[index].s3);
 	    if (k > 1) {
+/*
+	      if (ty.tsidata);
+		free(ty.tsidata);
 	      memset(&ty, 0, sizeof(ty));
+*/
 	      ty.yinlen = k;
 	      memcpy(yin, bc->yin+comb[index].s3, sizeof(Yin)*k);
 	      ty.yin = yin;
@@ -1307,6 +1336,8 @@ bimsContextDP(struct _db_pool *_db, struct bimsContext *bc)
     ncomb = 0;
     free(cand);
   }
+  if (ty.tsidata);
+    free(ty.tsidata);
 
   bc->ysinfo = ysinfo;
   bc->num_ysinfo = num_ysinfo;
@@ -1356,6 +1387,7 @@ bimsContextSmartEdit(struct _db_pool *_db, struct bimsContext *bc)
   memset(bc->internal_text, 0, sizeof(unsigned char)*(bc->yinlen*2+1));
   memset(&tsi, 0, sizeof(tsi));
   memset(tmp, 0, TMP_BUFFER);
+  memset(&ty, 0, sizeof(ty));
   tsi.tsi = tmp;
 
   for (i = 0; i < num_ysinfo; i++) {
@@ -1376,7 +1408,11 @@ bimsContextSmartEdit(struct _db_pool *_db, struct bimsContext *bc)
       }
     }
     else {
+/*
+      if (ty.tsidata)
+	free(ty.tsidata);
       memset(&ty, 0, sizeof(ty));
+*/
       ty.yinlen = ysinfo[i].yinlen;
       ty.yin = ysinfo[i].yindata;
       rval = bimsTsiYinDBPoolSearch(_db, &ty);
@@ -1920,6 +1956,8 @@ bimsFetchText(DB_pool db, unsigned long int bcid, int len)
 
   bc = bimsGetBC(bcid);
   newlen = (bc->yinlen < len) ? bc->yinlen : len;
+  memset(&ti, 0, sizeof(ti));
+  memset(&yi, 0, sizeof(yi));
 
   /* see if we need to/can update DBs */
   if (bc->updatedb &&
@@ -1928,9 +1966,10 @@ bimsFetchText(DB_pool db, unsigned long int bcid, int len)
     int ylen, yoff;
 
     for (i = 0; i < bc->num_ysinfo; i++) {
+/*
       memset(&ti, 0, sizeof(ti));
       memset(&yi, 0, sizeof(yi));
-
+*/
       ylen = bc->ysinfo[i].yinlen;
       yoff = bc->ysinfo[i].yinoff;
       /*
