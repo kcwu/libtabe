@@ -1,4 +1,4 @@
-£t	1	group 1: 21 symbols, 6 bits
+£t	1	group 1: 21 symbols, 5 bits
 £u	2
 £v	3
 £w	4
