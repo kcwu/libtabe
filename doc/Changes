@@ -6,6 +6,8 @@
 2. Fix bug in bims.c: the rule to choose the only one character.
    Thanks to vgod <vgod@CirX.org>.
 
+3. Fix bug of tsiadd.c for comment out a whole line in tsi.src.
+
 
 0.2.1:  2001/01/03
 ---------------------

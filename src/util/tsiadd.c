@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tsiadd.c,v 1.1 2000/12/09 09:14:30 thhsieh Exp $
+ * $Id: tsiadd.c,v 1.2 2001/01/12 15:38:46 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -31,7 +31,7 @@ usage(void)
   exit(0);
 }
 
-void
+int
 skip_comment(unsigned char *buf)
 {
   unsigned char *s = buf;
@@ -50,6 +50,7 @@ skip_comment(unsigned char *buf)
       s ++;
     }
   }
+  return (*buf == '\0') ? -1 : 0;
 }
 
 int
@@ -290,7 +291,8 @@ archive(struct TsiDB *db, FILE *fp, int ref, int tsiyin, int verbose)
     if (!fgets((char *)buf, BUF_SIZE-1, fp)) {
       break;
     }
-    skip_comment(buf);
+    if (skip_comment(buf) == -1)
+	continue;
 
     i++;
     yin[0] = (unsigned char)NULL;
