@@ -8,7 +8,7 @@
 
 <author>蕭百翔 <it><htmlurl url="mailto:shawn@iis.sinica.edu.tw"
                      name="&lt;shawn@iis.sinica.edu.tw&gt;"></it></author>
-<date>$Id: libtabe.sgml,v 1.1 2000/12/09 09:14:09 thhsieh Exp $
+<date>$Id: libtabe.sgml,v 1.2 2001/08/20 03:53:02 thhsieh Exp $
 
 <abstract>
 在電腦上處理中文，跟原有的 C 函式庫一直很難順利的整合。

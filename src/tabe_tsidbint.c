@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tabe_tsidbint.c,v 1.1 2000/12/09 09:14:12 thhsieh Exp $
+ * $Id: tabe_tsidbint.c,v 1.2 2001/08/20 03:53:03 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -77,33 +77,58 @@ tabeTsiDBOpen(int type, const char *db_name, int flags)
     tsidb->CursorNext = tabeTsiDBCursorNext;
     tsidb->CursorPrev = tabeTsiDBCursorPrev;
 
+#ifdef HAVE_DB3
+    /* create a db handler */
+    if ((errno = db_create(&dbp, NULL, 0)) != 0) {
+      fprintf(stderr, "db_create: %s\n", db_strerror(errno));
+      return (NULL);
+    }
+#endif
+
     if (tsidb->flags & DB_FLAG_CREATEDB) {
       if (tsidb->flags & DB_FLAG_READONLY) {
         return(NULL);
       }
       else {
+#ifndef HAVE_DB3
 	errno = db_open(db_name, DB_BTREE, DB_CREATE,
 			0644, NULL, NULL, &dbp);
+#else
+	errno = dbp->open(dbp, db_name, NULL, DB_BTREE, DB_CREATE, 0644);
+#endif
       }
     }
     else {
       if (tsidb->flags & DB_FLAG_READONLY) {
+#ifndef HAVE_DB3
 	errno = db_open(db_name, DB_BTREE, DB_RDONLY, 0444, NULL, NULL, &dbp);
+#else
+	errno = dbp->open(dbp, db_name, NULL, DB_BTREE, DB_RDONLY, 0444);
+#endif
       }
       else {
+#ifndef HAVE_DB3
 	errno = db_open(db_name, DB_BTREE, 0        , 0644, NULL, NULL, &dbp);
+#else
+	errno = dbp->open(dbp, db_name, NULL, DB_BTREE, 0, 0644);
+#endif
       }
     }
+
     if (errno > 0) {
-      fprintf(stderr, "tabeTsiDBOpen(): Can not open DB file %s(%s).\n",
+      fprintf(stderr, "tabeTsiDBOpen(): Can not open DB file %s (%s).\n",
 	     db_name, strerror(errno));
       free(tsidb);
       return(NULL);
     }
     if (errno < 0) {
       /* DB specific errno */
+#ifndef HAVE_DB3
       fprintf(stderr, "tabeTsiDBOpen(): DB error opening DB File %s.\n",
 	      db_name);
+#else
+      fprintf(stderr, "tabeTsiDBOpen(): %s.\n", db_strerror(errno));
+#endif
       free(tsidb);
       return(NULL);
     }
@@ -162,7 +187,11 @@ tabeTsiDBRecordNumber(struct TsiDB *tsidb)
     dbp = (DB *)tsidb->dbp;
     errno = dbp->stat(dbp, &sp, NULL, 0);
     if (!errno) {
+#ifndef HAVE_DB3
       return(sp->bt_nrecs);
+#else
+      return(sp->bt_ndata);  /* or sp->bt_nkeys? */
+#endif
     }
     break;
   default:
@@ -335,6 +364,9 @@ TsiDBStoreTsiDB(struct TsiDB *tsidb, struct TsiInfo *tsi)
   }
 
   free(dat.data);
+  if (!(tsidb->flags & DB_FLAG_NOSYNC)) {
+    dbp->sync(dbp, 0);
+  }
   return(0);
 }
 
@@ -388,10 +420,14 @@ tabeTsiDBCursorSet(struct TsiDB *tsidb, struct TsiInfo *tsi)
     dbcp->c_close(dbcp);
   }
 
+#ifndef HAVE_DB3
 #if DB_VERSION_MINOR > 6 || (DB_VERSION_MINOR == 6 && DB_VERSION_PATCH > 4)
   dbp->cursor(dbp, NULL, &dbcp, 0);
 #else
   dbp->cursor(dbp, NULL, &dbcp);
+#endif
+#else
+  dbp->cursor(dbp, NULL, &dbcp, 0);
 #endif
   tsidb->dbcp = dbcp;
 

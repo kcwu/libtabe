@@ -2,7 +2,7 @@
 # Copyright 1999, TaBE Project, All Rights Reserved.
 # Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
 #
-# $Id: Makefile.in,v 1.4 2001/06/25 03:45:17 thhsieh Exp $
+# $Id: Makefile.in,v 1.5 2001/08/20 03:53:04 thhsieh Exp $
 #
 CC              = @CC@
 CFLAGS          = @CFLAGS@

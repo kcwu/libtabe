@@ -1,0 +1,94 @@
+#
+# Copyright 1999, TaBE Project, All Rights Reserved.
+# Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
+#
+# $Id: Makefile.in,v 1.1 2001/08/20 03:53:11 thhsieh Exp $
+#
+CC              = @CC@
+CFLAGS          = @CFLAGS@
+CPPFLAGS        = @CPPFLAGS@
+DEFS            = @DEFS@
+RANLIB          = @RANLIB@
+LN_S            = @LN_S@
+LDFLAGS         = ../src/libtabe.la @db_library@
+INC             = @db_include@ -I../src
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA    = @INSTALL_DATA@
+@SET_MAKE@
+
+program_prefix	= @program_prefix@
+srcdir		= @srcdir@
+top_srcdir	= @top_srcdir@
+prefix		= $(program_prefix)@prefix@
+exec_prefix	= @exec_prefix@
+bindir		= @bindir@
+LIBTOOL		= $(top_srcdir)/libtool
+
+RELEASE_VER	= @RELEASE_VER@
+CURRENT_VER	= @CURRENT_VER@
+REVISION_VER	= @REVISION_VER@
+AGE_VER		= @AGE_VER@
+
+#
+# libtabe main makefile.
+#
+RM	=	rm -rf
+
+DUMP	=	tsidump
+DUMPSRC	=	tsidump.c
+DUMPOBJ	=	tsidump.o
+
+DEL	=	tsidel
+DELSRC	=	tsidel.c
+DELOBJ	=	tsidel.o
+
+ADD	=	tsiadd
+ADDSRC	=	tsiadd.c
+ADDOBJ	=	tsiadd.o
+
+TY	=	tsiyindump
+TYSRC	=	tsiyindump.c
+TYOBJ	=	tsiyindump.o
+
+CHK	=	tsiyincheck
+CHKSRC	=	tsiyincheck.c
+CHKOBJ	=	tsiyincheck.o
+
+PACKDB  =	tsipackdb
+
+all: $(DUMP) $(DEL) $(ADD) $(CHK) $(TY)
+	if [ ! -x $(PACKDB) ]; then chmod 755 $(PACKDB); fi
+
+.c.o:
+	$(CC) -c $(CFLAGS) $(INC) $(DEFS) -o $@ $<
+
+$(DUMP): $(DUMPOBJ)
+	$(LIBTOOL) --mode=link $(CC) $(CFLAGS) $(INC) $(DEFS) -o $(DUMP) $(DUMPOBJ) $(LDFLAGS)
+
+$(DEL): $(DELOBJ)
+	$(LIBTOOL) --mode=link $(CC) $(CFLAGS) $(INC) $(DEFS) -o $(DEL) $(DELOBJ) $(LDFLAGS)
+
+$(ADD): $(ADDOBJ)
+	$(LIBTOOL) --mode=link $(CC) $(CFLAGS) $(INC) $(DEFS) -o $(ADD) $(ADDOBJ) $(LDFLAGS)
+
+$(CHK): $(CHKOBJ)
+	$(LIBTOOL) --mode=link $(CC) $(CFLAGS) $(INC) $(DEFS) -o $(CHK) $(CHKOBJ) $(LDFLAGS)
+
+$(TY): $(TYOBJ)
+	$(LIBTOOL) --mode=link $(CC) $(CFLAGS) $(INC) $(DEFS) -o $(TY) $(TYOBJ) $(LDFLAGS)
+
+.PHONY: install clean distclean
+install: $(DUMP) $(DEL) $(ADD) $(TY)
+	if [ ! -d $(bindir) ]; then $(INSTALL) -d $(bindir); fi
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(DUMP) $(bindir)
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(DEL) $(bindir)
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(ADD) $(bindir)
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(CHK) $(bindir)
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(TY) $(bindir)
+
+clean:
+	$(RM) $(DUMP) $(DUMPOBJ) $(DEL) $(DELOBJ) $(ADD) $(ADDOBJ) $(PACKDB) \
+		$(CHK) $(CHKOBJ) $(TY) $(TYOBJ) *~ core .libs
+distclean: clean
+	$(RM) Makefile .depend

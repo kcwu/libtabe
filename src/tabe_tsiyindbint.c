@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tabe_tsiyindbint.c,v 1.2 2001/01/10 01:38:31 thhsieh Exp $
+ * $Id: tabe_tsiyindbint.c,v 1.3 2001/08/20 03:53:03 thhsieh Exp $
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -81,25 +81,41 @@ tabeTsiYinDBOpen(int type, const char *db_name, int flags)
     tsiyindb->CursorNext = tabeTsiYinDBCursorNext;
     tsiyindb->CursorPrev = tabeTsiYinDBCursorPrev;
 
+#ifdef HAVE_DB3
+    /* create a db handler */
+    if ((errno = db_create(&dbp, NULL, 0)) != 0) {
+      fprintf(stderr, "db_create: %s\n", db_strerror(errno));
+      return (NULL);
+    }
+#endif
+
     if (tsiyindb->flags & DB_FLAG_CREATEDB) {
       if (tsiyindb->flags & DB_FLAG_READONLY) {
         return(NULL);
       }
       else {
+#ifndef HAVE_DB3
 	errno = db_open(db_name, DB_BTREE, DB_CREATE,
 			0644, NULL, NULL, &dbp);
-
+#else
+	errno = dbp->open(dbp, db_name, NULL, DB_BTREE, DB_CREATE, 0644);
+#endif
       }
     }
     else {
       if (tsiyindb->flags & DB_FLAG_READONLY) {
-	errno = db_open(db_name, DB_BTREE, DB_RDONLY,
-			0444, NULL, NULL, &dbp);
+#ifndef HAVE_DB3
+	errno = db_open(db_name, DB_BTREE, DB_RDONLY, 0444, NULL, NULL, &dbp);
+#else
+	errno = dbp->open(dbp, db_name, NULL, DB_BTREE, DB_RDONLY, 0444);
+#endif
       }
       else {
-	errno = db_open(db_name, DB_BTREE, 0        ,
-			0644, NULL, NULL, &dbp);
-
+#ifndef HAVE_DB3
+	errno = db_open(db_name, DB_BTREE, 0        , 0644, NULL, NULL, &dbp);
+#else
+	errno = dbp->open(dbp, db_name, NULL, DB_BTREE, 0, 0644);
+#endif
       }
     }
     if (errno > 0) {
@@ -110,8 +126,12 @@ tabeTsiYinDBOpen(int type, const char *db_name, int flags)
     }
     if (errno < 0) {
       /* DB specific errno */
+#ifndef HAVE_DB3
       fprintf(stderr, "tabeTsiYinDBOpen(): DB error opening DB File %s.\n",
 	      db_name);
+#else
+      fprintf(stderr, "tabeTsiYinDBOpen(): %s.\n", db_strerror(errno));
+#endif
       free(tsiyindb);
       return(NULL);
     }
@@ -169,7 +189,11 @@ tabeTsiYinDBRecordNumber(struct TsiYinDB *tsiyindb)
     dbp = (DB *)tsiyindb->dbp;
     errno = dbp->stat(dbp, &sp, NULL, 0);
     if (!errno) {
+#ifndef HAVE_DB3
       return(sp->bt_nrecs);
+#else
+      return(sp->bt_ndata);  /* or sp->bt_nkeys? */
+#endif
     }
     break;
   default:
@@ -319,6 +343,9 @@ TsiYinDBStoreTsiYinDB(struct TsiYinDB *tsiyindb, struct TsiYinInfo *tsiyin)
   }
 
   free(dat.data);
+  if (!(tsiyindb->flags & DB_FLAG_NOSYNC)) {
+    dbp->sync(dbp, 0);
+  }
   return(0);
 }
 
@@ -372,10 +399,14 @@ tabeTsiYinDBCursorSet(struct TsiYinDB *tsiyindb, struct TsiYinInfo *tsiyin)
     dbcp->c_close(dbcp);
   }
 
+#ifndef HAVE_DB3
 #if DB_VERSION_MINOR > 6 || (DB_VERSION_MINOR == 6 && DB_VERSION_PATCH > 4)
   dbp->cursor(dbp, NULL, &dbcp, 0);
 #else
   dbp->cursor(dbp, NULL, &dbcp);
+#endif
+#else
+  dbp->cursor(dbp, NULL, &dbcp, 0);
 #endif
   tsiyindb->dbcp = dbcp;
 

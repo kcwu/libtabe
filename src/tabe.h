@@ -2,7 +2,7 @@
  * Copyright 1999, TaBE Project, All Rights Reserved.
  * Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
  *
- * $Id: tabe.h,v 1.1 2000/12/09 09:14:09 thhsieh Exp $
+ * $Id: tabe.h,v 1.2 2001/08/20 03:53:03 thhsieh Exp $
  *
  */
 #ifndef __TABE_H__
@@ -37,7 +37,7 @@ struct TsiInfo {
 };
 
 struct TsiYinInfo {
-  Yin               *yin ;
+  Yin               *yin;
   unsigned long int  yinlen;
   unsigned long int  tsinum;
   ZhiStr             tsidata;
@@ -93,6 +93,7 @@ enum {
 #define DB_FLAG_OVERWRITE 0x1
 #define DB_FLAG_CREATEDB  0x2
 #define DB_FLAG_READONLY  0x4
+#define DB_FLAG_NOSYNC	  0x8
 
 struct TsiDB       *tabeTsiDBOpen(int type, const char *db_name, int flags);
 

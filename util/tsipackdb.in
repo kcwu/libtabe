@@ -1,0 +1,48 @@
+#!/bin/sh
+#
+# Copyright 1999, TaBE Project, All Rights Reserved.
+# Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
+#
+# $Id: tsipackdb.in,v 1.1 2001/08/20 03:53:11 thhsieh Exp $
+#
+
+PATH=@db_bin@
+USE_DB=@USE_DB@
+
+DB2_VER='6	Btree version number.'
+DB3_VER='8	Btree version number.'
+export PATH
+
+if [ "$#" != 1 ]; then
+    echo "Usage: tsipackdb <filename.db>"
+    exit 0
+fi
+
+pack_db_file () {
+    db_stat=`which ${1}_stat`
+    db_dump=`which ${1}_dump`
+    db_load=`which ${1}_load`
+    test -x $db_stat && test -x $db_dump && test -x $db_load && \
+	$db_stat -d $2 2>&1 | (
+	    read line
+	    read line
+	    test "$line" = "$3" && \
+		echo "Using $db_dump and $db_load to pack $2 ...." && \
+		${1}_dump $2 | ${1}_load $2.new && \
+		mv $2.new $2 && \
+		return 0
+	    return -1 \
+	)
+}
+
+
+if [ "$USE_DB" = "DB2" ]; then
+    pack_db_file db  $1 "$DB2_VER" && exit 0
+    pack_db_file db2 $1 "$DB2_VER" && exit 0
+fi
+
+if [ "$USE_DB" = "DB3" ]; then
+    pack_db_file db  $1 "$DB3_VER" && exit 0
+    pack_db_file db3 $1 "$DB3_VER" && exit 0
+fi
+

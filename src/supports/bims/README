@@ -1,12 +1,15 @@
 
 o Introduction:
 
-  bims is designed and implemented as an analogy of Going input kernel
-  of Window platform.
+  bims is designed and implemented to solve the problem of
+  phoneme-to-character, and may be similar to the Going input
+  kernel on Window platform in some aspects.  A study shows that bims
+  can achieve more than 90% of character accuracy with a reasonable
+  lexicon, such as the one included in libtabe.
 
-  The kernel could be used in various applications, not limited to
-  Phonetic input method. However, because of the limited accuracy it
-  can achieve so far, no other applications are under consideration.
+  bims could be used in other applications, not limited to Phonetic
+  input method.  For example, speech recognition and other input
+  method.
 
   It makes use of libtabe, and is independent of user-interface. In
   the directory examples/GTK, you can find a file `gtk_entryglue.c',
@@ -22,8 +25,6 @@ o Supported Key Maps:
   2. Eten Key Map
   3. Hsu Key Map
   4. ET26 Key Map
-
-  The implement of Hsu Key Map and ET26 Key Map may be wrong, though.
 
 o Kernel Interface
 
@@ -49,6 +50,14 @@ o Kernel Interface
   .bimsToggleEditing()
 
 	Toggle into editing mode.
+
+  .bimsToggleSmartEditing()
+
+	Enable smart editing.
+
+  .bimsToggleNoSmartEditing()
+
+	Enable smart editing.
 
   .bimsPindown()
 

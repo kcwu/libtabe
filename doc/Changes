@@ -1,4 +1,4 @@
-0.2.3:
+0.2.3: 2001/08/20
 ---------------------
 1. Fix compilation warnings in HP-UX in tabe_chu.c
 
@@ -20,6 +20,18 @@
 
 8. Fix bug in tabe_zhi2yin.h: _yinlistA94D[].
    Thanks to Kuang-che Wu <kcwu@ck.tp.edu.tw>.
+
+9. Merge changes from sourceforge CVS tree (Thanks to Shawn)
+   a. Add porting to Berkeley DB3.
+      (including rewriting libtabe/util/tsipackdb.in)
+   b. Move libtabe/src/tsi-src --> libtabe/tsi-src
+	   libtabe/src/util    --> libtabe/util
+   c. Add libtabe/util/tsiyincheck.c
+	(Thanks to Kuang-che Wu <kcwu@ck.tp.edu.tw>)
+   d. Many enhancements of libbims:
+	Multiple databases supports.
+	Add recording feature (enhanced from Pofeng's bimsphone2 code).
+	New API function added.
 
 
 0.2.2:  2001/06/07

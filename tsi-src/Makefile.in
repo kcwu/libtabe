@@ -1,0 +1,64 @@
+#
+# Copyright 1999, TaBE Project, All Rights Reserved.
+# Copyright 1999, Pai-Hsiang Hsiao, All Rights Reserved.
+#
+# $Id: Makefile.in,v 1.1 2001/08/20 03:53:10 thhsieh Exp $
+#
+INSTALL         = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA    = @INSTALL_DATA@
+@SET_MAKE@
+
+program_prefix	= @program_prefix@
+srcdir		= @srcdir@
+top_srcdir	= @top_srcdir@
+prefix		= $(program_prefix)@prefix@
+exec_prefix	= @exec_prefix@
+libdir		= @libdir@
+bindir		= @bindir@
+datadir		= @datadir@/tabe/tsiyin
+LIBTOOL		= $(top_srcdir)/libtool
+db_bin		= @db_bin@
+mergedb		= @enable_mergedb@
+DB_DUMP		= @DB_DUMP@
+DB_LOAD		= @DB_LOAD@
+
+RELEASE_VER	= @RELEASE_VER@
+CURRENT_VER	= @CURRENT_VER@
+REVISION_VER	= @REVISION_VER@
+AGE_VER		= @AGE_VER@
+
+RM          = rm -rf
+SRC	    = tsi.src
+TSIDB	    = tsi.db
+YINDB	    = yin.db
+ADD         = ../util/tsiadd
+TY          = ../util/tsiyindump
+
+
+all: $(mergedb) $(TSIDB) $(YINDB)
+
+$(TSIDB): $(SRC)
+	$(LIBTOOL) --mode=execute $(ADD) -d $(TSIDB) -f $(SRC) -r -y
+
+$(YINDB): $(TSIDB)
+	$(LIBTOOL) --mode=execute $(TY) -d $(TSIDB) -y $(YINDB)
+	sh ../util/tsipackdb $(YINDB)
+
+mergedb:
+	if [ ! -f $(TSIDB) ] && [ -f $(datadir)/$(TSIDB) ]; then \
+		cp $(datadir)/$(TSIDB) .; touch $(SRC); fi
+
+.PHONY: clean distclean install
+clean:
+	$(RM) $(TSIDB) $(YINDB) core
+
+distclean:
+	$(RM) $(TSIDB) $(YINDB)
+	$(RM) Makefile
+
+install: all
+	if [ ! -d $(datadir) ]; then $(INSTALL) -d $(datadir); fi
+	$(INSTALL_DATA) $(TSIDB) $(datadir)
+	$(INSTALL_DATA) $(YINDB) $(datadir)
+

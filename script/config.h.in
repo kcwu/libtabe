@@ -9,6 +9,10 @@
 /* Define if the debug option is enabled. */
 #undef DEBUG
 
+#undef HAVE_DB2
+
+#undef HAVE_DB3
+
 #undef LINUX
 
 #undef FREEBSD
@@ -35,6 +39,3 @@
 
 /* Define if you have the <unistd.h> header file.  */
 #undef HAVE_UNISTD_H
-
-/* Define if you have the X11 library (-lX11).  */
-#undef HAVE_LIBX11

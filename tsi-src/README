@@ -1,0 +1,111 @@
+
+Please read the file COPYING for more information on your rights and
+limitations for materials in this directory.
+
+$Id: README,v 1.1 2001/08/20 03:53:10 thhsieh Exp $
+
+===============================================================================
+
+0. Table of Content
+  1. Introduction
+  2. The lexicon
+  3. The reference count
+  4. The syllable
+  5. Current Development
+  6. Author Information
+
+1. Introduction
+
+  The original tsi.src had 138,614 entries of Chinese words in Big5
+  encoding.  The lexicon were compiled from 3 sources:
+
+  (1) Chih-Hao Tsai
+
+      http://www.geocities.com/hao510/wordlist/
+
+  (2) IOME
+
+  (3) Xcin
+
+  Entries from these sources were then slightly modified.
+
+  Each entry, a line, in tsi.src describes a word.  Each entry
+  consists of the following two or three fields:
+
+  (1) the word itself in Big5 encoding
+
+  (2) the reference count summarized by the work at
+      Computer Systems and Communication Lab,
+      Institute of Information Science, Academia Sinica
+
+  (3) the syllables annotated in BoPoMoFo, which were collected
+      from various sources and mostly edited manually
+
+  The syllables may not be present, and each field is separated by
+  a space character (' ').
+
+2. The lexicon
+
+  Despite of the first source listed in the previous section, the
+  author can hardly find any reference point for the second and the
+  third sources.
+
+  The first source contributes over 95% lexicons to the collection.
+
+3. The reference count
+
+  The reference count of each entry is important for some
+  applications, but there is no freely accessible corpus for
+  generating this data.  The author asked CCL, IIS, Academia Sinica,
+  where he was working for, for the permission of gathering such data
+  from a corpus that consists of HTML pages crawled from various
+  Internet sites in Taiwan.  The request was granted.
+
+  The author sampled 1,200,000 pages from the database (which contains
+  more than 2,000,000 pages at that time) at the beginning of March,
+  1999.  The pages are collected in December, 1998.
+
+  "Maximum Matching Segmentation Algorithm" is the method used to
+  identify words present in each HTML page.  You can read
+
+  http://www.geocities.com/hao510/mmseg/
+
+  for more information about the algorithm.
+
+  Some words have 0 reference count because of no occurrence in the
+  corpus.
+
+4. The syllable
+
+  Syllable is also important for some applications, so the author
+  started to collect available data from the Internet as well as
+  revise each entry manually with other developers.
+
+  Some of the syllable annotation are not correct, and some of them are
+  not present.
+
+5. Current Development
+
+  After the release of libtabe and bims in 1999, it became part of
+  xcin.  Xcin is a Chinese input method for X window system, and bims
+  is used as the engine of its phonetic input method as well as the
+  engine for phoneme-to-character resolution.
+
+  Developers of xcin soon realized that the data contains in the
+  lexicon affects the performance of the input method, for example,
+  incorrect words in the lexicon were sometimes chosen when user is
+  entering text, and the user must be interrupted to correct those
+  errors.  Another problem is the lack of syllables preventing correct
+  words from being chosen, and making incorrect words to be chosen,
+  during the process.
+
+  One easy solution is to revise the lexicon and correct these errors,
+  and the developers are actively working on this.  For more
+  information, please visit
+
+  http://xcin.linux.org.tw/libtabe/tsi-project.html.
+
+6. Author Information
+
+  Pai-Hsiang Hsiao <shawn@eecs.harvard.edu> and numerous contributors.
+

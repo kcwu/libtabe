@@ -23,19 +23,19 @@ AC_ARG_ENABLE(merge-db,
      fi])
 
 AC_ARG_WITH(dbinc,
-    [  --with-dbinc=PATH       set the include dir of Berkeley DB2.],
+    [  --with-dbinc=PATH       set the include dir of Berkeley DB2/3.],
     [if test x$withval != x; then
          db_include="$withval"
      fi])
 
 AC_ARG_WITH(dblib,
-    [  --with-dblib=PATH       set the library dir of Berkeley DB2.],
+    [  --with-dblib=PATH       set the library dir of Berkeley DB2/3.],
     [if test x$withval != x; then
          db_library="$withval"
      fi])
 
 AC_ARG_WITH(dbbin,
-    [  --with-dbbin=PATH       set the binary dir of Berkeley DB2.],
+    [  --with-dbbin=PATH       set the binary dir of Berkeley DB2/3.],
     [if test x$withval != x; then
          db_bin="$withval"
      fi])
@@ -161,7 +161,7 @@ esac
 
 
 dnl-----------------------------------------------------------------------
-dnl Checks for Berkeley DB2 libraries.
+dnl Checks for Berkeley DB2/3 libraries.
 dnl-----------------------------------------------------------------------
 if test ! x$db_include = x; then
     db_include="-I$db_include"
@@ -176,15 +176,25 @@ if test ! x$db_library = x; then
     LDFLAGS="$LDFLAGS $db_library"
 fi
 
-for f in db db2; do
-    AC_CHECK_LIB($f, db_open,
-        [ found=y; db_library="$db_library -l$f" ], [ found=n ])
-    test $found = y && break
-done
-if test $found = n; then
-    AC_MSG_RESULT([You need Berkeley DB2 to compile bimsphone module.])
-    AC_MSG_RESULT([Please use --with-dblib to configure.])
-    exit 1
+USE_DB=NONE
+AC_SEARCH_LIBS(db_create, db db3,
+    [ found=y; db_library="$db_library $LIBS" ], [ found=n ])
+if test $found = y; then
+    AC_MSG_RESULT([Use Berkeley DB3 to compile libtabe.])
+    AC_DEFINE(HAVE_DB3)
+    USE_DB=DB3
+else
+    AC_SEARCH_LIBS(db_open, db db2,
+        [ found=y; db_library="$db_library $LIBS" ], [ found=n ])
+    if test $found = y; then
+        AC_MSG_RESULT([Use Berkeley DB2 to compile libtabe.])
+        AC_DEFINE(HAVE_DB2)
+	USE_DB=DB2
+    else
+        AC_MSG_RESULT([You need Berkeley DB2 or DB3 to compile libtabe.])
+        AC_MSG_RESULT([Please use --with-dblib to configure.])
+        exit 1
+    fi
 fi
 
 AC_CHECK_HEADERS(db.h, ,
@@ -195,19 +205,15 @@ AC_CHECK_HEADERS(db.h, ,
 if test -z "$db_bin"; then
     db_bin="$PATH"
 else
-    db_bin="$PATH:$db_bin"
+    db_bin="$db_bin:$PATH"
 fi
-AC_CHECK_PROG(DB_DUMP, db_dump, yes, no, $db_bin)
-AC_CHECK_PROG(DB_LOAD, db_load, yes, no, $db_bin)
-
 AC_SUBST(db_include)
 AC_SUBST(db_library)
 AC_SUBST(db_bin)
-AC_SUBST(DB_DUMP)
-AC_SUBST(DB_LOAD)
+AC_SUBST(USE_DB)
 
 dnl-----------------------------------------------------------------------
-dnl Checks for X11R6 library
+dnl Checks for X11R6 library and header files.
 dnl-----------------------------------------------------------------------
 AC_PATH_X
 if test x$x_includes = x; then
@@ -240,6 +246,7 @@ AC_CHECK_FUNCS(strdup strerror strstr)
 AC_OUTPUT(Makefile:script/Makefile.in \
 	  src/Makefile \
 	  src/supports/bims/Makefile \
-	  src/util/Makefile \
-	  src/tsi-src/Makefile)
+	  util/Makefile \
+	  util/tsipackdb \
+	  tsi-src/Makefile)
 

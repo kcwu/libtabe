@@ -1,8 +1,4 @@
 
-The library consists of software developed by several entities.
-
-The following license applies to major parts of the software.
-
 /*
  * Copyrighy (c) 1999 TaBE Project.
  * Copyright (c) 1999 Pai-Hsiang Hsiao.
@@ -69,4 +65,7 @@ The following license applies to major parts of the software.
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+Copyright 1996 Chih-Hao Tsai @ Beckman Institute, University of Illinois
+c-tsai4@uiuc.edu  http://casper.beckman.uiuc.edu/~c-tsai4
 

@@ -17,6 +17,10 @@
 /* Define if the debug option is enabled. */
 #undef DEBUG
 
+#undef HAVE_DB2
+
+#undef HAVE_DB3
+
 #undef LINUX
 
 #undef FREEBSD
